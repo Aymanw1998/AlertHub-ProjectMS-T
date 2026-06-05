@@ -1,7 +1,9 @@
 package com.mst.integration;
 
+import com.mst.config.RestTemplateConfig;
 import com.mst.dto.github.GitHubContentDTO;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
 
@@ -9,13 +11,12 @@ import java.util.Arrays;
 import java.util.List;
 
 @Component
-@RequiredArgsConstructor
 public class GitHubInte {
 
-    private final RestTemplate restTemplate;
+    @Autowired
+    private RestTemplate restTemplate;
 
-    private static final String ALERT_HUB_URL =
-            "https://api.github.com/repos/teamMST/MST_AlertHub/contents";
+    private String ALERT_HUB_URL = "https://api.github.com/repos/teamMST/MST_AlertHub/contents";
 
     public List<GitHubContentDTO> getRootContent() {
 
@@ -27,7 +28,7 @@ public class GitHubInte {
 
         return res == null ? List.of() : Arrays.asList(res);
     }
-    public List<GitHubContentDTO> getRootContent(String folderName) {
+    public List<GitHubContentDTO> getFolderContent(String folderName) {
 
         GitHubContentDTO[] res =
                 restTemplate.getForObject(

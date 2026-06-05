@@ -4,9 +4,9 @@ import com.mst.model.Environment;
 import com.mst.model.Label;
 import com.mst.model.Loader;
 import com.opencsv.CSVReader;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.URL;
 import java.time.LocalDateTime;
@@ -16,7 +16,9 @@ import java.util.List;
 
 @Service
 public class CsvParserService {
+
     public List<Loader> parse(String downloadUrl) {
+        //זה אחרי על לקבל ממני URL
         List<Loader> result = new ArrayList<>();
         try {
             CSVReader reader = new CSVReader(new InputStreamReader(new URL(downloadUrl).openStream()));
@@ -41,12 +43,11 @@ public class CsvParserService {
 
     private Loader mapRow(String[] row) {
         Loader loader = new Loader();
-
         loader.setTimestamp(LocalDateTime.now());
         loader.setOwner_id(Long.valueOf(row[1]));
         loader.setProject(row[2]);
         loader.setTag(row[3]);
-        loader.setLabel(Label.valueOf(row[4]));
+        loader.setLabel(Label.valueOf(row[4])); //row[] -> string
         loader.setDeveloper_id(row[5]);
         loader.setTask_number(row[6]);
         loader.setEnvironment(Environment.valueOf(row[7]));

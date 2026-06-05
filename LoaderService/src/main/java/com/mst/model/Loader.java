@@ -11,7 +11,7 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @NoArgsConstructor
 @ToString
-@Table(name = "PlatformInformation")
+@Table(name = "platforminformation") //DB
 public class Loader {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

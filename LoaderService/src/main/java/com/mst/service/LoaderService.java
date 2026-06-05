@@ -4,10 +4,12 @@ import com.mst.dto.github.GitHubContentDTO;
 import com.mst.integration.GitHubInte;
 import com.mst.model.Loader;
 import com.mst.repo.LoaderRepo;
-import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.List;
 
 @Service
@@ -20,6 +22,10 @@ public class LoaderService {
     private  LoaderRepo loaderRepo;
 
     public String scan() {
+        LocalDateTime lastScan = loaderRepo.findLastTimestamp();
+        if (lastScan != null) {
+            System.out.println(lastScan);
+        }
 
         int loadedFiles = 0;
         int loadedRows = 0;
@@ -32,7 +38,7 @@ public class LoaderService {
                 continue;
             }
 
-            List<GitHubContentDTO> files = gitHubInte.getRootContent(folder.getName());
+            List<GitHubContentDTO> files = gitHubInte.getFolderContent(folder.getName());
 
             for (GitHubContentDTO file : files) {
 
@@ -40,8 +46,12 @@ public class LoaderService {
                     continue;
                 }
 
-                String provider = folder.getName();
                 try {
+                    if(lastScan != null) {
+                        LocalDateTime fileDate = extractTimestamp(file.getName());
+
+                        if(lastScan.isAfter(fileDate)) continue;
+                    }
                     List<Loader> rows = csvParserService.parse(file.getDownload_url());
                     loaderRepo.saveAll(rows);
 
@@ -68,5 +78,21 @@ public class LoaderService {
                 && "file".equals(item.getType())
                 && item.getName() != null
                 && item.getName().endsWith(".csv");
+    }
+
+    private LocalDateTime extractTimestamp(String fileName) {
+
+
+        String fileNameCleanType = fileName.replace(".csv", "");
+
+        String datePart = fileNameCleanType.substring(fileNameCleanType.indexOf('_') + 1);
+
+        String[] dateTimeStrArr = datePart.split("T");
+
+        String dateStr = dateTimeStrArr[0].replace("_", "-");
+        String timeStr = dateTimeStrArr[1].replace("_", ":");
+
+        return LocalDateTime.of(LocalDate.parse(dateStr), LocalTime.parse(timeStr));
+
     }
 }
