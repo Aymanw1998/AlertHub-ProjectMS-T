@@ -25,10 +25,13 @@ public class CsvParserService {
             boolean firstLine = true;
             while ((row = reader.readNext()) != null) {
                 //Skip first line (the headers)
-                if (!firstLine) {
-                    Loader loader = mapRow(row);
-                    result.add(loader);
+                if (firstLine) {
+                    firstLine = false;
+                    continue;
                 }
+                Loader loader = mapRow(row);
+                result.add(loader);
+
             }
             return result;
         } catch (Exception e) {

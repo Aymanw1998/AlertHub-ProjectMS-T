@@ -37,21 +37,4 @@ public class GitHubInte {
 
         return res == null ? List.of() : Arrays.asList(res);
     }
-
-    public List<GitHubContentDTO> getFolderContent(String folderName) {
-
-        String url = ALERT_HUB_URL;
-
-        if (folderName != null && !folderName.isBlank()) {
-            url += "/" + folderName;
-        }
-
-        GitHubContentDTO[] res =
-                restTemplate.getForObject(
-                        url,
-                        GitHubContentDTO[].class
-                );
-
-        return res == null ? List.of() : Arrays.asList(res);
-    }
 }

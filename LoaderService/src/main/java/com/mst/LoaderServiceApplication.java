@@ -13,20 +13,20 @@ public class LoaderServiceApplication {
         SpringApplication.run(LoaderServiceApplication.class, args);
     }
 
-    @Bean
-    CommandLineRunner test(GitHubInte gitHubInte) {
-        return args -> {
-
-            System.out.println("===== GITHUB TEST =====");
-
-            gitHubInte.getRootContent()
-                    .forEach(item ->
-                            System.out.println(
-                                    item.getName() + " | " + item.getType()
-                            )
-                    );
-
-            System.out.println("===== END TEST =====");
-        };
-    }
+//    @Bean
+//    CommandLineRunner test(GitHubInte gitHubInte) {
+//        return args -> {
+//
+//            System.out.println("===== GITHUB TEST =====");
+//
+//            gitHubInte.getRootContent()
+//                    .forEach(item ->
+//                            System.out.println(
+//                                    item.getName() + " | " + item.getType()
+//                            )
+//                    );
+//
+//            System.out.println("===== END TEST =====");
+//        };
+//    }
 }

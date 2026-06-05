@@ -10,5 +10,6 @@ public class GitHubContentDTO {
     private String path;
     private String type;
     private String download_url;
+    private String url;
 
 }

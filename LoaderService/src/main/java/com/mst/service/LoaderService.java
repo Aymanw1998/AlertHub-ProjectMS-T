@@ -32,8 +32,7 @@ public class LoaderService {
                 continue;
             }
 
-            List<GitHubContentDTO> files =
-                    gitHubInte.getRootContent(folder.getName());
+            List<GitHubContentDTO> files = gitHubInte.getRootContent(folder.getName());
 
             for (GitHubContentDTO file : files) {
 
@@ -42,13 +41,15 @@ public class LoaderService {
                 }
 
                 String provider = folder.getName();
+                try {
+                    List<Loader> rows = csvParserService.parse(file.getDownload_url());
+                    loaderRepo.saveAll(rows);
 
-                List<Loader> rows = csvParserService.parse(file.getDownload_url());
-
-                loaderRepo.saveAll(rows);
-
-                loadedFiles++;
-                loadedRows += rows.size();
+                    loadedFiles++;
+                    loadedRows += rows.size();
+                } catch(Exception e) {
+                    System.out.println("Error for parse: " + e.getMessage());
+                }
             }
         }
 
