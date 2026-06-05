@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -23,6 +24,7 @@ public class LoaderService {
 
     public String scan() {
         LocalDateTime lastScan = loaderRepo.findLastTimestamp();
+        List<String> newFilesName = new ArrayList<>();
         if (lastScan != null) {
             System.out.println(lastScan);
         }
@@ -54,7 +56,9 @@ public class LoaderService {
                     }
                     List<Loader> rows = csvParserService.parse(file.getDownload_url());
                     loaderRepo.saveAll(rows);
-
+                    if(newFilesName.indexOf(file.getName()) == -1){
+                        newFilesName.addLast(file.getName());
+                    }
                     loadedFiles++;
                     loadedRows += rows.size();
                 } catch(Exception e) {
@@ -62,11 +66,9 @@ public class LoaderService {
                 }
             }
         }
-
-        return "Scan completed. Loaded files: "
-                + loadedFiles
-                + ", Loaded rows: "
-                + loadedRows;
+        if(loadedFiles == 0)
+            return "No new files to scan";
+        return "New files scanned successfully, the files: " + String.join(", ", newFilesName);
     }
 
     private boolean isDirectory(GitHubContentDTO item) {
