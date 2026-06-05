@@ -1,0 +1,71 @@
+package com.mst.service;
+
+import com.mst.dto.github.GitHubContentDTO;
+import com.mst.integration.GitHubInte;
+import com.mst.model.Loader;
+import com.mst.repo.LoaderRepo;
+import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import java.util.List;
+
+@Service
+public class LoaderService {
+    @Autowired
+    private  GitHubInte                                                                                                                                                                                                                 gitHubInte;
+    @Autowired
+    private  CsvParserService csvParserService;
+    @Autowired
+    private  LoaderRepo loaderRepo;
+
+    public String scan() {
+
+        int loadedFiles = 0;
+        int loadedRows = 0;
+
+        List<GitHubContentDTO> rootContent = gitHubInte.getRootContent();
+
+        for (GitHubContentDTO folder : rootContent) {
+
+            if (!isDirectory(folder)) {
+                continue;
+            }
+
+            List<GitHubContentDTO> files =
+                    gitHubInte.getRootContent(folder.getName());
+
+            for (GitHubContentDTO file : files) {
+
+                if (!isCsvFile(file)) {
+                    continue;
+                }
+
+                String provider = folder.getName();
+
+                List<Loader> rows = csvParserService.parse(file.getDownload_url());
+
+                loaderRepo.saveAll(rows);
+
+                loadedFiles++;
+                loadedRows += rows.size();
+            }
+        }
+
+        return "Scan completed. Loaded files: "
+                + loadedFiles
+                + ", Loaded rows: "
+                + loadedRows;
+    }
+
+    private boolean isDirectory(GitHubContentDTO item) {
+        return item != null && "dir".equals(item.getType());
+    }
+
+    private boolean isCsvFile(GitHubContentDTO item) {
+        return item != null
+                && "file".equals(item.getType())
+                && item.getName() != null
+                && item.getName().endsWith(".csv");
+    }
+}
