@@ -1,5 +1,6 @@
 package com.mst.service;
 
+import com.mst.exceptions.CsvParseException;
 import com.mst.model.Environment;
 import com.mst.model.Label;
 import com.mst.model.Loader;
@@ -17,7 +18,7 @@ import java.util.List;
 @Service
 public class CsvParserService {
 
-    public List<Loader> parse(String downloadUrl) {
+    public List<Loader> parse(String downloadUrl) throws CsvParseException {
         //זה אחרי על לקבל ממני URL
         List<Loader> result = new ArrayList<>();
         try {
@@ -37,7 +38,7 @@ public class CsvParserService {
             }
             return result;
         } catch (Exception e) {
-            throw new RuntimeException("cannot parse CSV file to data for DB");
+            throw new CsvParseException("Cannot parse CSV file: " + downloadUrl);
         }
     }
 

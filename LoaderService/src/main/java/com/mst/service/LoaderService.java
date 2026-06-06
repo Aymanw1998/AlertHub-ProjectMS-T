@@ -1,6 +1,8 @@
 package com.mst.service;
 
-import com.mst.dto.github.GitHubContentDTO;
+import com.mst.dto.github.GitHubResponseDTO;
+import com.mst.exceptions.GitHubIntegrationException;
+import com.mst.exceptions.LoaderException;
 import com.mst.integration.GitHubInte;
 import com.mst.model.Loader;
 import com.mst.repo.LoaderRepo;
@@ -32,17 +34,17 @@ public class LoaderService {
         int loadedFiles = 0;
         int loadedRows = 0;
 
-        List<GitHubContentDTO> rootContent = gitHubInte.getRootContent();
+        List<GitHubResponseDTO> rootContent = gitHubInte.getRootContent();
 
-        for (GitHubContentDTO folder : rootContent) {
+        for (GitHubResponseDTO folder : rootContent) {
 
             if (!isDirectory(folder)) {
                 continue;
             }
 
-            List<GitHubContentDTO> files = gitHubInte.getFolderContent(folder.getName());
+            List<GitHubResponseDTO> files = gitHubInte.getFolderContent(folder.getName());
 
-            for (GitHubContentDTO file : files) {
+            for (GitHubResponseDTO file : files) {
 
                 if (!isCsvFile(file)) {
                     continue;
@@ -62,7 +64,7 @@ public class LoaderService {
                     loadedFiles++;
                     loadedRows += rows.size();
                 } catch(Exception e) {
-                    System.out.println("Error for parse: " + e.getMessage());
+                    throw new LoaderException("Error while parsing file: " + file.getName());
                 }
             }
         }
@@ -71,11 +73,11 @@ public class LoaderService {
         return "New files scanned successfully, the files: " + String.join(", ", newFilesName);
     }
 
-    private boolean isDirectory(GitHubContentDTO item) {
+    private boolean isDirectory(GitHubResponseDTO item) {
         return item != null && "dir".equals(item.getType());
     }
 
-    private boolean isCsvFile(GitHubContentDTO item) {
+    private boolean isCsvFile(GitHubResponseDTO item) {
         return item != null
                 && "file".equals(item.getType())
                 && item.getName() != null

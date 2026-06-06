@@ -5,7 +5,7 @@ import lombok.Setter;
 
 @Getter
 @Setter
-public class GitHubContentDTO {
+public class GitHubResponseDTO {
     private String name;
     private String path;
     private String type;

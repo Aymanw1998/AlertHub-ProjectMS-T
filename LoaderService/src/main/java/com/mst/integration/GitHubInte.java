@@ -1,8 +1,7 @@
 package com.mst.integration;
 
-import com.mst.config.RestTemplateConfig;
-import com.mst.dto.github.GitHubContentDTO;
-import lombok.RequiredArgsConstructor;
+import com.mst.dto.github.GitHubResponseDTO;
+import com.mst.exceptions.GitHubIntegrationException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
@@ -18,24 +17,30 @@ public class GitHubInte {
 
     private String ALERT_HUB_URL = "https://api.github.com/repos/teamMST/MST_AlertHub/contents";
 
-    public List<GitHubContentDTO> getRootContent() {
+    public List<GitHubResponseDTO> getRootContent() {
+        try {
+            GitHubResponseDTO[] res =
+                    restTemplate.getForObject(
+                            ALERT_HUB_URL,
+                            GitHubResponseDTO[].class
+                    );
 
-        GitHubContentDTO[] res =
-                restTemplate.getForObject(
-                        ALERT_HUB_URL,
-                        GitHubContentDTO[].class
-                );
-
-        return res == null ? List.of() : Arrays.asList(res);
+            return res == null ? List.of() : Arrays.asList(res);
+        } catch (Exception e) {
+            throw new GitHubIntegrationException("Failed to get root content from GitHub");
+        }
     }
-    public List<GitHubContentDTO> getFolderContent(String folderName) {
+    public List<GitHubResponseDTO> getFolderContent(String folderName) {
+        try {
+            GitHubResponseDTO[] res =
+                    restTemplate.getForObject(
+                            ALERT_HUB_URL + "/" + folderName,
+                            GitHubResponseDTO[].class
+                    );
 
-        GitHubContentDTO[] res =
-                restTemplate.getForObject(
-                        ALERT_HUB_URL + "/" + folderName,
-                        GitHubContentDTO[].class
-                );
-
-        return res == null ? List.of() : Arrays.asList(res);
+            return res == null ? List.of() : Arrays.asList(res);
+        } catch (Exception e) {
+            throw new GitHubIntegrationException("Failed to get folder content " + folderName);
+        }
     }
 }
