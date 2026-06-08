@@ -19,50 +19,34 @@ import java.util.List;
 public class LoaderService {
     @Autowired
     private  GitHubInte                                                                                                                                                                                                                 gitHubInte;
+
     @Autowired
     private  CsvParserService csvParserService;
+
     @Autowired
     private  LoaderRepo loaderRepo;
 
     public String scan() {
         LocalDateTime lastScan = loaderRepo.findLastTimestamp();
         List<String> newFilesName = new ArrayList<>();
-        if (lastScan != null) {
-            System.out.println(lastScan);
-        }
-
+        if(lastScan != null) System.out.println(lastScan);
         int loadedFiles = 0;
-        int loadedRows = 0;
-
         List<GitHubResponseDTO> rootContent = gitHubInte.getRootContent();
-
-        for (GitHubResponseDTO folder : rootContent) {
-
-            if (!isDirectory(folder)) {
-                continue;
-            }
-
+        for(GitHubResponseDTO folder : rootContent) {
+            if (!isDirectory(folder)) continue;
             List<GitHubResponseDTO> files = gitHubInte.getFolderContent(folder.getName());
-
-            for (GitHubResponseDTO file : files) {
-
-                if (!isCsvFile(file)) {
-                    continue;
-                }
-
+            for(GitHubResponseDTO file : files) {
+                if (!isCsvFile(file)) continue;
                 try {
                     if(lastScan != null) {
                         LocalDateTime fileDate = extractTimestamp(file.getName());
-
                         if(lastScan.isAfter(fileDate)) continue;
                     }
                     List<Loader> rows = csvParserService.parse(file.getDownload_url());
                     loaderRepo.saveAll(rows);
-                    if(newFilesName.indexOf(file.getName()) == -1){
+                    if(!newFilesName.contains(file.getName()))
                         newFilesName.addLast(file.getName());
-                    }
                     loadedFiles++;
-                    loadedRows += rows.size();
                 } catch(Exception e) {
                     throw new LoaderException("Error while parsing file: " + file.getName());
                 }
@@ -70,7 +54,7 @@ public class LoaderService {
         }
         if(loadedFiles == 0)
             return "No new files to scan";
-        return "New files scanned successfully, the files: " + String.join(", ", newFilesName);
+        return "New files scanned successfully, the  files: " + String.join(", ", newFilesName);
     }
 
     private boolean isDirectory(GitHubResponseDTO item) {
@@ -85,17 +69,11 @@ public class LoaderService {
     }
 
     private LocalDateTime extractTimestamp(String fileName) {
-
-
         String fileNameCleanType = fileName.replace(".csv", "");
-
         String datePart = fileNameCleanType.substring(fileNameCleanType.indexOf('_') + 1);
-
         String[] dateTimeStrArr = datePart.split("T");
-
         String dateStr = dateTimeStrArr[0].replace("_", "-");
         String timeStr = dateTimeStrArr[1].replace("_", ":");
-
         return LocalDateTime.of(LocalDate.parse(dateStr), LocalTime.parse(timeStr));
 
     }
