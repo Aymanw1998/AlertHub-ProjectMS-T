@@ -5,9 +5,8 @@ import com.mst.model.Environment;
 import com.mst.model.Label;
 import com.mst.model.Loader;
 import com.opencsv.CSVReader;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.URL;
 import java.time.LocalDateTime;
@@ -19,11 +18,12 @@ import java.util.List;
 public class CsvParserService {
 
     public List<Loader> parse(String downloadUrl) throws CsvParseException {
-        //זה אחרי על לקבל ממני URL
         List<Loader> result = new ArrayList<>();
+        InputStream stream = null;
+        CSVReader reader = null;
         try {
-            CSVReader reader = new CSVReader(new InputStreamReader(new URL(downloadUrl).openStream()));
-
+            stream = new URL(downloadUrl).openStream();
+            reader = new CSVReader(new InputStreamReader(stream));
             String[] row;
             boolean firstLine = true;
             while ((row = reader.readNext()) != null) {
@@ -39,6 +39,17 @@ public class CsvParserService {
             return result;
         } catch (Exception e) {
             throw new CsvParseException("Cannot parse CSV file: " + downloadUrl);
+        } finally {
+            try {
+                if (reader != null) {
+                    reader.close();
+                }
+                if(stream != null){
+                    stream.close();
+                }
+            } catch(Exception ex) {
+                System.out.println("Failed to close stream: " + ex.getMessage());
+            }
         }
     }
 

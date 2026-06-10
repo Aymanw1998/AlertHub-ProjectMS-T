@@ -19,11 +19,13 @@ public class GitHubInte {
 
     public List<GitHubResponseDTO> getRootContent() {
         try {
+            //restTEmplate & openFeign
             GitHubResponseDTO[] res =
                     restTemplate.getForObject(
                             ALERT_HUB_URL,
                             GitHubResponseDTO[].class
                     );
+
 
             return res == null ? List.of() : Arrays.asList(res);
         } catch (Exception e) {

@@ -26,6 +26,10 @@ public class LoaderService {
     @Autowired
     private  LoaderRepo loaderRepo;
 
+    public List<Loader> getAll() {
+        return loaderRepo.findAll();
+    }
+
     public String scan() {
         LocalDateTime lastScan = loaderRepo.findLastTimestamp();
         List<String> newFilesName = new ArrayList<>();
@@ -69,11 +73,16 @@ public class LoaderService {
     }
 
     private LocalDateTime extractTimestamp(String fileName) {
+        //: jira_2024_08_22T13_30_00
         String fileNameCleanType = fileName.replace(".csv", "");
         String datePart = fileNameCleanType.substring(fileNameCleanType.indexOf('_') + 1);
+        //2024_08_22T13_30_00
         String[] dateTimeStrArr = datePart.split("T");
+        //["date"],["time"]
         String dateStr = dateTimeStrArr[0].replace("_", "-");
         String timeStr = dateTimeStrArr[1].replace("_", ":");
+        //2024-08-22
+        //13:30:00
         return LocalDateTime.of(LocalDate.parse(dateStr), LocalTime.parse(timeStr));
 
     }
