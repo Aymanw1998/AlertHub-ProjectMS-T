@@ -20,7 +20,7 @@ public class ProcessorService {
     private MetricClient metricClient;
     private void test(String info) {
 
-        ACTION action = new Action(info);
+        //ACTION action = new Action(info);
         ResponseEntity<List<Loader>> resLoader = loaderClient.getAllData();
         List<Loader> dataLoader =  resLoader.getBody();
 
