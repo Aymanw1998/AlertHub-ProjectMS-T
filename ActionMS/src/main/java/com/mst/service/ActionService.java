@@ -1,28 +1,59 @@
 package com.mst.service;
 
+import com.mst.dto.ActionKafkaDTO;
+import com.mst.dto.ActionMapper;
 import com.mst.model.Action;
+import com.mst.model.RunOnDay;
 import com.mst.repo.ActionRepo;
 import com.mst.exceptions.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.kafka.core.KafkaTemplate;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
+import tools.jackson.databind.ObjectMapper;
 
 import java.sql.Timestamp;
+import java.time.LocalDate;
 import java.util.Date;
 import java.util.List;
+import java.util.Objects;
 
 @Service
 public class ActionService {
     @Autowired
     private ActionRepo repo;
-
+    @Autowired
+    private ObjectMapper objectMapper;
     @Autowired
     private KafkaTemplate<String, String> kafkaTemplate;
 
     public int count = 0;
     public void publishMessage(String message) {
-        kafkaTemplate.send("actionTopic", count  +": " + message);
-        count++;
+        kafkaTemplate.send("actionTopic",  message);
+    }
+    @Scheduled(cron = "0 0/30 * * * *")
+    public void scheduledActions() {
+
+        String currentDay = LocalDate.now().getDayOfWeek().name();
+        RunOnDay dayEnum = RunOnDay.valueOf(currentDay); // המרה ל-Enum
+        List<Action> actionsToRun = repo.findActiveActionsForToday(dayEnum);
+
+        if (actionsToRun.isEmpty()) {
+            return;
+        }
+
+        List<String> infos = actionsToRun.stream()
+                .map(ActionMapper::toDTO).toList().stream()
+                .map(this::jsonString).filter(Objects::nonNull).toList();
+
+        infos.forEach(this::publishMessage);
+    }
+    private String jsonString(ActionKafkaDTO dto) {
+        try{
+            return objectMapper.writeValueAsString(dto);
+        } catch (Exception e) {
+            return null;
+        }
     }
     public List<Action> getAll() {
         // מומלץ בהמשך לשנות את זה ל- repo.findByIsDeletedFalse() כדי לא להחזיר פעולות שנמחקו

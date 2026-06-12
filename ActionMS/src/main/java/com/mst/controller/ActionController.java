@@ -1,7 +1,6 @@
 package com.mst.controller;
 
 import com.mst.model.Action;
-import com.mst.scheduler.ActionJobScheduler;
 import com.mst.service.ActionService;
 import com.mst.exceptions.*;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,11 +17,9 @@ public class ActionController {
     @Autowired
     private ActionService service;
 
-    @Autowired
-    private ActionJobScheduler scheduler;
     @GetMapping("/send/kafka")
     public ResponseEntity<String> sendData() {
-        scheduler.processScheduledActions();
+        service.scheduledActions();
         return ResponseEntity.ok("successfully");
     }
     @GetMapping("/get-all")

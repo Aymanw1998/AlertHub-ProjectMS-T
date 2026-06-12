@@ -1,13 +1,32 @@
 package com.mst.model;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 public enum Label {
-    bug, //0 //Something is not working
-    documentation, //Improvements or additions to documentation
-    enhancement, //New feature or request
-    help_wanted, //Extra attention is needed
-    duplicate, //This issue or pull request already exists
-    invalid, //This dos not seem right
-    wontfix, //This will not be worked on
-    good_first_issue, //Good for newcomers
-    question, //Further information is requested
-    }
+    @JsonProperty("bug")
+    BUG, //Something is not working
+
+    @JsonProperty("documentation")
+    DOCUMENTATION, //Improvements or additions to documentation
+
+    @JsonProperty("enhancement")
+    ENHANCEMENT, //New feature or request
+
+    @JsonProperty("help_wanted")
+    HELP_WANTED, //Extra attention is needed
+
+    @JsonProperty("duplicate")
+    DUPLICATE, //This issue or pull request already exists
+
+    @JsonProperty("invalid")
+    INVALID, //This dos not seem right
+
+    @JsonProperty("wontfix")
+    WONTFIX, //This will not be worked on
+
+    @JsonProperty("good_first_issue")
+    GOOD_FIRST_ISSUE, //Good for newcomers
+
+    @JsonProperty("question")
+    QUESTION, //Further information is requested
+}

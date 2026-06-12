@@ -9,6 +9,7 @@ import com.mst.integration.GitHubInte;
 import com.mst.model.Loader;
 import com.mst.repo.LoaderRepo;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
@@ -36,6 +37,32 @@ public class LoaderService {
     /**
      * פונקציית הסריקה עודכנה לזרוק את השגיאות שלנו החוצה ל-Controller
      */
+    @Scheduled(cron = "0 0 * * * *")
+    public void scanAuto() {
+        System.out.println("⏳ [Auto-Scan] Job woke up! Starting scheduled GitHub scan...");
+        try {
+            // קריאה לפונקציית הסריקה שעושה את העבודה האמיתית
+            String result = scan();
+
+            // הדפסת התוצאה ללוג (במקום להחזיר אותה כ-String החוצה)
+            System.out.println("✅ [Auto-Scan] Scan completed successfully. Details: " + result);
+
+        } catch (InvalidFileNameException | CsvParseException e) {
+            // שגיאות לוגיות - בעיה בקבצים ספציפיים
+            System.err.println("⚠️ [Auto-Scan] Logical data error during scan: " + e.getMessage());
+
+        } catch (GitHubIntegrationException e) {
+            // שגיאות רשת - אין גישה לגיטהאב
+            System.err.println("❌ [Auto-Scan] Connection error with GitHub: " + e.getMessage());
+
+        } catch (Exception e) {
+            // תפיסת מטרייה לכל שגיאה אחרת לא צפויה (כמו בעיית התחברות ל-DB)
+            System.err.println("💥 [Auto-Scan] CRITICAL SYSTEM ERROR: " + e.getMessage());
+            e.printStackTrace();
+        } finally {
+            System.out.println("🏁 [Auto-Scan] Job finished and going back to sleep.");
+        }
+    }
     public String scan() throws LoaderException, GitHubIntegrationException, CsvParseException, InvalidFileNameException {
         LocalDateTime lastScan = loaderRepo.findLastTimestamp();
         List<String> newFilesName = new ArrayList<>();
