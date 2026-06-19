@@ -14,6 +14,7 @@ import tools.jackson.databind.ObjectMapper;
 
 import java.sql.Timestamp;
 import java.time.LocalDate;
+import java.time.LocalTime;
 import java.util.Date;
 import java.util.List;
 import java.util.Objects;
@@ -36,17 +37,24 @@ public class ActionService {
 
         String currentDay = LocalDate.now().getDayOfWeek().name();
         RunOnDay dayEnum = RunOnDay.valueOf(currentDay); // המרה ל-Enum
-        List<Action> actionsToRun = repo.findActiveActionsForToday(dayEnum);
+        LocalTime currentTime= LocalTime.now().withSecond(0).withNano(0);
+        List<Action> actionsToRun = repo.findActiveActionsForToday(dayEnum, currentTime);
 
         if (actionsToRun.isEmpty()) {
             return;
         }
 
-        List<String> infos = actionsToRun.stream()
-                .map(ActionMapper::toDTO).toList().stream()
-                .map(this::jsonString).filter(Objects::nonNull).toList();
-
-        infos.forEach(this::publishMessage);
+        List<Action> infos = actionsToRun.stream()
+                            .filter(a-> a.getIs_enabled() == true && a.getIs_deleted() == false)
+                .toList();
+        List<String> infosStr = infos.stream()
+                                .map(ActionMapper::toDTO)
+                                .map(this::jsonString)
+                                .filter(Objects::nonNull)
+                                .toList();
+        infosStr.forEach(this::publishMessage);
+        infos.forEach((a)-> a.setLast_run(new Timestamp(System.currentTimeMillis())));
+        repo.saveAll(infos);
     }
     private String jsonString(ActionKafkaDTO dto) {
         try{
@@ -66,7 +74,7 @@ public class ActionService {
     }
 
     public Action create(Action info) throws InvalidNameException, InvalidActionTypeException,
-            InvalidMessageException, InvalidRecipientException {
+            InvalidMessageException, InvalidRecipientException, InvalidRunDayTimeException, InvalidConditionException {
         // הרצת וולידציות ידניות
         validateAction(info);
 
@@ -81,7 +89,7 @@ public class ActionService {
 
     public Action update(Long id, Action info) throws ActionNotFoundException, InvalidNameException,
             InvalidActionTypeException, InvalidMessageException,
-            InvalidRecipientException {
+            InvalidRecipientException, InvalidRunDayTimeException, InvalidConditionException {
         // 1. וידוא קיום
         Action existingAction = getOneById(id);
 
@@ -117,7 +125,7 @@ public class ActionService {
 
     // מתודת עזר לוולידציה (הלוגיקה העסקית)
     private void validateAction(Action info) throws InvalidNameException, InvalidActionTypeException,
-            InvalidMessageException, InvalidRecipientException {
+            InvalidMessageException, InvalidRecipientException, InvalidRunDayTimeException, InvalidConditionException {
         if (info.getName() == null || info.getName().trim().isEmpty()) {
             throw new InvalidNameException("Action name cannot be empty");
         }
@@ -132,6 +140,25 @@ public class ActionService {
 
         if (info.getTo() == null || info.getTo().trim().isEmpty()) {
             throw new InvalidRecipientException("Recipient destination ('to' field) cannot be empty");
+        }
+        if (info.getRun_on_time() == null) {
+            throw new InvalidRunDayTimeException("Run time is required");
+        }
+
+        int minute = info.getRun_on_time().getMinute();
+
+        if (minute != 0 && minute != 30) {
+            throw new InvalidRunDayTimeException("Run time must be full hour or half hour only");
+        }
+        if (info.getRun_on_time().getSecond() != 0) {
+            throw new InvalidRunDayTimeException("Run time seconds must be 0");
+        }
+
+        if (info.getRun_on_day() == null) {
+            throw new InvalidRunDayTimeException("Run day is required");
+        }
+        if (info.getCondition() == null || info.getCondition().isBlank()) {
+            throw new InvalidConditionException("Condition is required");
         }
     }
 }

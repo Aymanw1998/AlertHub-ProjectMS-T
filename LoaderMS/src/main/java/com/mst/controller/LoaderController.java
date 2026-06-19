@@ -21,14 +21,14 @@ public class LoaderController {
     @Autowired
     private LoaderService service;
 
-    @GetMapping("/all-data")
-    // GET http://localhost:1000/api/loader/all-data
+    @GetMapping("/get-all")
+    // GET http://localhost:1010/api/loader/all-data
     public ResponseEntity<List<Loader>> getAllData() {
         return ResponseEntity.ok(service.getAll());
     }
 
     @GetMapping("/scan")
-    // GET http://localhost:1000/api/loader/scan
+    // GET http://localhost:1010/api/loader/scan
     public ResponseEntity<?> scan() {
         try {
             // ניסיון להריץ את הסריקה מול גיטהאב

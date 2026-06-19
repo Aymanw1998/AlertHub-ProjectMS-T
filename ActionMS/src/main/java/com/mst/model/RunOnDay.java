@@ -17,5 +17,10 @@ public enum RunOnDay {
     FRIDAY,
     @JsonProperty("Saturday")
     SATURDAY,
-    ALL
+    @JsonProperty("All")
+    ALL;
+
+    public static RunOnDay fromString(String value) {
+        return RunOnDay.valueOf(value.trim().toUpperCase());
+    }
 }

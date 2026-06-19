@@ -30,8 +30,18 @@ public class LoaderService {
     @Autowired
     private LoaderRepo loaderRepo;
 
+    @Autowired
+    private CacheService cacheService;
+
     public List<Loader> getAll() {
-        return loaderRepo.findAll();
+        List<Loader> cachedData = cacheService.getAllDataFromCache();
+        if(cachedData != null) {
+            return cachedData;
+        }
+        System.out.println("⚠️ Cache is empty. Loading data from MySQL...");
+        List<Loader> data = loaderRepo.findAll();
+        cacheService.saveAllToCache(data);
+        return data;
     }
 
     /**
@@ -106,9 +116,13 @@ public class LoaderService {
             }
         }
 
+        List<Loader> data = loaderRepo.findAll();
+        cacheService.saveAllToCache(data);
+
         if (loadedFiles == 0) {
             return "No new files to scan";
         }
+
         return "New files scanned successfully, the files: " + String.join(", ", newFilesName);
     }
 

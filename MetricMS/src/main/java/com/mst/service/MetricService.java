@@ -1,11 +1,13 @@
 package com.mst.service;
 
+import com.mst.MetricMSApplication;
 import com.mst.model.Metric;
 import com.mst.repo.MetricRepo;
 import com.mst.exceptions.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -28,6 +30,22 @@ public class MetricService {
         validateMetric(info);
 
         return repo.save(info);
+    }
+
+    public List<Metric> createAll(List<Metric> infos) {
+        List<Metric> result = new ArrayList<>();
+        for (Metric info : infos) {
+            try {
+                validateMetric(info);
+                result.add(info);
+            } catch (InvalidNameException e) {
+
+            } catch (InvalidLabelException e) {
+            } catch (InvalidThresholdException e) {
+            } catch (InvalidTimeFrameException e) {
+            }
+        }
+        return repo.saveAll(result);
     }
 
     public Metric update(Long id, Metric info) throws MetricNotFoundException, InvalidNameException,

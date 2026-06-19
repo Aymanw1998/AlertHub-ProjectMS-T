@@ -43,7 +43,8 @@ public class ActionController {
             Action createdAction = service.create(m);
             return ResponseEntity.ok(createdAction);
         } catch (InvalidNameException | InvalidActionTypeException |
-                 InvalidMessageException | InvalidRecipientException e) {
+                 InvalidMessageException | InvalidRecipientException |
+                 InvalidRunDayTimeException | InvalidConditionException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
         }
     }
@@ -56,7 +57,8 @@ public class ActionController {
         } catch (ActionNotFoundException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
         } catch (InvalidNameException | InvalidActionTypeException |
-                 InvalidMessageException | InvalidRecipientException e) {
+                 InvalidMessageException | InvalidRecipientException |
+                 InvalidRunDayTimeException | InvalidConditionException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
         }
     }

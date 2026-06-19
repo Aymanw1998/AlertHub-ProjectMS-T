@@ -1,7 +1,6 @@
 package com.mst.exceptions;
 import lombok.Getter;
 import lombok.Setter;
-import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 @Getter
 @Setter

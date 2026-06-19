@@ -28,5 +28,9 @@ public enum Label {
     GOOD_FIRST_ISSUE, //Good for newcomers
 
     @JsonProperty("question")
-    QUESTION, //Further information is requested
+    QUESTION; //Further information is requested
+
+    public static Label fromString(String value) {
+        return Label.valueOf(value.trim().toUpperCase());
+    }
 }

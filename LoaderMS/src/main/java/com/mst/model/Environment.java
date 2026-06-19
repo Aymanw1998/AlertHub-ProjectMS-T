@@ -10,5 +10,9 @@ public enum Environment {
     STAGING,
 
     @JsonProperty("development")
-    DEVELOPMENT
+    DEVELOPMENT;
+
+    public static Environment fromString(String value) {
+        return Environment.valueOf(value.trim().toUpperCase());
+    }
 }

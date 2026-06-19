@@ -44,6 +44,11 @@ public class MetricController {
         }
     }
 
+    @PostMapping("/create-Many")
+    public ResponseEntity<?> create(@RequestBody List<Metric> m) {
+            List<Metric> createdMetric = service.createAll(m);
+            return ResponseEntity.ok(createdMetric);
+    }
     @PutMapping("/update/{id}")
     public ResponseEntity<?> update(@PathVariable Long id, @RequestBody Metric m) {
         try {

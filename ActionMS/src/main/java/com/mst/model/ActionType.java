@@ -6,5 +6,9 @@ public enum ActionType {
     @JsonProperty("sms")
     SMS,
     @JsonProperty("email")
-    EMAIL,
+    EMAIL;
+
+    public static ActionType fromString(String value) {
+        return ActionType.valueOf(value.trim().toUpperCase());
+    }
 }
