@@ -15,13 +15,16 @@ public class CacheService {
     @Autowired
     public ObjectMapper objectMapper;
 
-    public void saveAllToCache(List<Loader> loaders){
-        try{
+    public void saveAllToCache(List<Loader> loaders) {
+        try {
             String json = objectMapper.writeValueAsString(loaders);
             redisTemplate.opsForValue().set("all", json);
-            System.out.println("✅ Loader data saved to Redis cache. Rows: " + loaders.size());
-        }  catch (Exception e){
-            throw new RuntimeException("Failed to save loader data to Redis cache", e);
+
+        } catch (Exception e) {
+            System.out.println(
+                    "Redis unavailable. Continuing with MySQL: "
+                            + e.getMessage()
+            );
         }
     }
 

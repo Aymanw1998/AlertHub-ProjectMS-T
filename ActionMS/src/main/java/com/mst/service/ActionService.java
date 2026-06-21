@@ -32,6 +32,27 @@ public class ActionService {
     public void publishMessage(String message) {
         kafkaTemplate.send("actionTopic",  message);
     }
+
+    public Action triggerManually(Long id) throws ActionNotFoundException {
+        Action action = getOneById(id);
+
+        if (action.getIs_deleted()) {
+            throw new ActionNotFoundException("Action with id:" +action.getId() + " not found");
+        }
+
+        ActionKafkaDTO dto = ActionMapper.toDTO(action);
+        String json = jsonString(dto);
+
+        if (json == null) {
+            throw new RuntimeException("Failed to convert action to JSON");
+        }
+
+        publishMessage(json);
+
+        action.setLast_run(new Timestamp(System.currentTimeMillis()));
+        return repo.save(action);
+    }
+
     @Scheduled(cron = "0 0/30 * * * *")
     public void scheduledActions() {
 
@@ -45,13 +66,14 @@ public class ActionService {
         }
 
         List<Action> infos = actionsToRun.stream()
-                            .filter(a-> a.getIs_enabled() == true && a.getIs_deleted() == false)
-                .toList();
+                            .filter(a-> a.getIs_enabled() == true && a.getIs_deleted() == false).toList();
+
         List<String> infosStr = infos.stream()
                                 .map(ActionMapper::toDTO)
                                 .map(this::jsonString)
                                 .filter(Objects::nonNull)
                                 .toList();
+
         infosStr.forEach(this::publishMessage);
         infos.forEach((a)-> a.setLast_run(new Timestamp(System.currentTimeMillis())));
         repo.saveAll(infos);
@@ -126,7 +148,7 @@ public class ActionService {
     // מתודת עזר לוולידציה (הלוגיקה העסקית)
     private void validateAction(Action info) throws InvalidNameException, InvalidActionTypeException,
             InvalidMessageException, InvalidRecipientException, InvalidRunDayTimeException, InvalidConditionException {
-        if (info.getName() == null || info.getName().trim().isEmpty()) {
+        if (info.getName() == null || info.getName().trim().isBlank()) {
             throw new InvalidNameException("Action name cannot be empty");
         }
 

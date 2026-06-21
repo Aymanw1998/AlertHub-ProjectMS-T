@@ -1,0 +1,1 @@
+proxy: none)  20:32:54,201] INFO [ControllerServer id=1] Loaded new metadata FinalizedFeatures[metadataVersion=4.3-IV0, finalizedFeatures={group.version=1, streams.version=1, transaction.version=2, eligible.leader.replicas.version=1, share.version=1, metadata.version=30}, finalizedFeaturesEpoch=92944]. (org.apache.kafka.metadata.publisher.FeaturesPublisher)\settings.txt

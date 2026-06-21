@@ -69,7 +69,7 @@ public class CsvParserService {
 
         try {
             loader.setTimestamp(LocalDateTime.now()); // חזרנו לזמן הריצה של עכשיו!
-            loader.setOwner_id(Long.valueOf(row[1]));
+            loader.setOwner_id(row[1] == null || row[1].isBlank() ? 0L : Long.valueOf(row[1].trim()));
             loader.setProject(row[2]);
             loader.setTag(row[3]);
             loader.setLabel(Label.fromString(row[4]));
@@ -77,7 +77,7 @@ public class CsvParserService {
             loader.setTask_number(row[6]);
             loader.setEnvironment(Environment.fromString(row[7].trim()));
             loader.setUser_story(row[8]);
-            loader.setTask_point(Integer.valueOf(row[9]));
+            loader.setTask_point(row[9] == null || row[9].isBlank() ? 0 :Integer.valueOf(row[9].trim()));
             loader.setSprint(row[10]);
 
             // הרצת וולידציה על הנתונים עם מספר השורה

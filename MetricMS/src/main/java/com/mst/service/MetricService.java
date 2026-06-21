@@ -73,7 +73,7 @@ public class MetricService {
     private void validateMetric(Metric info) throws InvalidNameException, InvalidLabelException,
             InvalidThresholdException, InvalidTimeFrameException {
         // בדיקת תקינות השם שלא יהיה null או ריק
-        if (info.getName() == null || info.getName().trim().isEmpty()) {
+        if (info.getName() == null || info.getName().isBlank()) {
             throw new InvalidNameException("Metric name cannot be empty");
         }
 

@@ -17,10 +17,13 @@ public class ActionController {
     @Autowired
     private ActionService service;
 
-    @GetMapping("/send/kafka")
-    public ResponseEntity<String> sendData() {
-        service.scheduledActions();
-        return ResponseEntity.ok("successfully");
+    @PostMapping("/process/{id}")
+    public ResponseEntity<?> triggerManually(@PathVariable Long id) {
+        try {
+            return ResponseEntity.ok(service.triggerManually(id));
+        } catch (ActionNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+        }
     }
     @GetMapping("/get-all")
     public ResponseEntity<List<Action>> getAllData() {

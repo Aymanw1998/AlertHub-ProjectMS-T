@@ -9,7 +9,7 @@ import java.util.List;
 
 @FeignClient(name = "loader-service", url="${loader.service.url}")
 public interface LoaderClient {
-    @GetMapping("/all-data")
+    @GetMapping("/get-all")
     public ResponseEntity<List<Loader>> getAllData();
 
 }
