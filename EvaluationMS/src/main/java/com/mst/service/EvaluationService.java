@@ -5,7 +5,7 @@ import com.mst.dto.DeveloperLabelCountResponse;
 import com.mst.dto.LabelAggregateResponse;
 import com.mst.dto.TaskAmountResponse;
 import com.mst.model.Label;
-import com.mst.model.PlatformInformation;
+import com.mst.model.Loader;
 import feign.FeignException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -26,14 +26,14 @@ public class EvaluationService {
     public DeveloperLabelCountResponse getDeveloperWithMostLabel(String labelName, Integer sinceDays) {
         Label label = Label.fromString(labelName);
         LocalDateTime fromDate = getFromDate(sinceDays);
-        List<PlatformInformation> data = getPlatformInformation();
+        List<Loader> data = getPlatformInformation();
 
         Map<String, Long> countsByDeveloper = data.stream()
                 .filter(item -> isInTimeFrame(item, fromDate))
                 .filter(item -> item.getLabel() == label)
                 .filter(item -> hasText(item.getDeveloper_id()))
                 .collect(Collectors.groupingBy(
-                        PlatformInformation::getDeveloper_id,
+                        Loader::getDeveloper_id,
                         Collectors.counting()
                 ));
 
@@ -57,14 +57,14 @@ public class EvaluationService {
         validateDeveloperId(developerId);
 
         LocalDateTime fromDate = getFromDate(sinceDays);
-        List<PlatformInformation> data = getPlatformInformation();
+        List<Loader> data = getPlatformInformation();
 
         Map<Label, Long> labelCounts = data.stream()
                 .filter(item -> isInTimeFrame(item, fromDate))
                 .filter(item -> developerId.equals(item.getDeveloper_id()))
                 .filter(item -> item.getLabel() != null)
                 .collect(Collectors.groupingBy(
-                        PlatformInformation::getLabel,
+                        Loader::getLabel,
                         Collectors.counting()
                 ));
 
@@ -79,7 +79,7 @@ public class EvaluationService {
         validateDeveloperId(developerId);
 
         LocalDateTime fromDate = getFromDate(sinceDays);
-        List<PlatformInformation> data = getPlatformInformation();
+        List<Loader> data = getPlatformInformation();
 
         long taskAmount = data.stream()
                 .filter(item -> isInTimeFrame(item, fromDate))
@@ -93,9 +93,9 @@ public class EvaluationService {
         );
     }
 
-    private List<PlatformInformation> getPlatformInformation() {
+    private List<Loader> getPlatformInformation() {
         try {
-            ResponseEntity<List<PlatformInformation>> response = loaderClient.getAllData();
+            ResponseEntity<List<Loader>> response = loaderClient.getAllData();
 
             if (!response.getStatusCode().is2xxSuccessful() || response.getBody() == null) {
                 throw new RuntimeException("Failed to get platform information from LoaderMS");
@@ -116,7 +116,7 @@ public class EvaluationService {
         return LocalDateTime.now().minusDays(sinceDays);
     }
 
-    private boolean isInTimeFrame(PlatformInformation item, LocalDateTime fromDate) {
+    private boolean isInTimeFrame(Loader item, LocalDateTime fromDate) {
         return item != null
                 && item.getTimestamp() != null
                 && item.getTimestamp().isAfter(fromDate);

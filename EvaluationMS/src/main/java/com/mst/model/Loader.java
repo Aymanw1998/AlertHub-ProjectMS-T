@@ -7,7 +7,7 @@ import java.time.LocalDateTime;
 
 @Getter
 @Setter
-public class PlatformInformation {
+public class Loader {
     private Long id;
     private LocalDateTime timestamp;
     private Long owner_id;

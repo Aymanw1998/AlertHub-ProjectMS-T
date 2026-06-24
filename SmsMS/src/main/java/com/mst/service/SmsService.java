@@ -25,14 +25,8 @@ public class SmsService {
     @Value("${logger.service.url}")
     private String loggerURL;
 
-    @Value("${twilio.account.sid}")
-    private String accountSid;
-
-    @Value("${twilio.auth.token}")
-    private String authToken;
-
     @Value("${twilio.messaging.service.sid}")
-    private String fromSid;
+    private String messagingServiceSid;
 
     @KafkaListener(topics = "smsTopic", groupId = "sms-queue")
     public void listen(String message) {
@@ -79,16 +73,11 @@ public class SmsService {
         }
     }
 
-    @PostConstruct
-    public void initTwilio() {
-        Twilio.init(accountSid, authToken);
-    }
-
     private String sendTwilioSMS(String to, String message) {
 
         Message twilioMessage = Message.creator(
                 new PhoneNumber(formatIsraeliNumber(to)),
-                fromSid,
+                messagingServiceSid,
                 message
         ).create();
 

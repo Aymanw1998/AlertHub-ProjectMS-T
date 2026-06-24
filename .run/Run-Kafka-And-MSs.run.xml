@@ -2,6 +2,7 @@
   <configuration default="false" name="Run-Kafka-And-MSs" type="CompoundRunConfigurationType">
     <toRun name="ActionMS" type="SpringBootApplicationConfigurationType" />
     <toRun name="EmailMS" type="SpringBootApplicationConfigurationType" />
+    <toRun name="EvaluationMS" type="SpringBootApplicationConfigurationType" />
     <toRun name="GatewayMS" type="SpringBootApplicationConfigurationType" />
     <toRun name="LoaderMS" type="SpringBootApplicationConfigurationType" />
     <toRun name="LoggerMS" type="SpringBootApplicationConfigurationType" />

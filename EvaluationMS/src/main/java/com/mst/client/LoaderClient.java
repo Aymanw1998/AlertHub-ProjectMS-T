@@ -1,6 +1,6 @@
 package com.mst.client;
 
-import com.mst.model.PlatformInformation;
+import com.mst.model.Loader;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -11,5 +11,5 @@ import java.util.List;
 public interface LoaderClient {
 
     @GetMapping("/get-all")
-    ResponseEntity<List<PlatformInformation>> getAllData();
+    ResponseEntity<List<Loader>> getAllData();
 }
