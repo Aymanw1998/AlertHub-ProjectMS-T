@@ -1,7 +1,9 @@
 package com.mst.controller;
 
+import com.mst.dto.RoleMapper;
 import com.mst.dto.RoleResponseDTO;
 import com.mst.exceptions.RoleNotFoundException;
+import com.mst.model.Role;
 import com.mst.service.RoleService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -23,11 +25,15 @@ public class RoleController {
 
     @GetMapping("/get-all")
     public ResponseEntity<List<RoleResponseDTO>> getAll() {
-        return ResponseEntity.ok(service.getAll());
+        List<Role> roles = service.getAll();
+        List<RoleResponseDTO> dto = roles.stream().map(RoleMapper::toDTO).toList();
+        return ResponseEntity.ok(dto);
     }
     @GetMapping("/get-one/{id}")
     public ResponseEntity<?> getOneById(@PathVariable Long id) {
         try {
+            Role role = service.getOneById(id);
+            RoleResponseDTO dto = RoleMapper.toDTO(role);
             return ResponseEntity.ok(service.getOneById(id));
         } catch (RoleNotFoundException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());

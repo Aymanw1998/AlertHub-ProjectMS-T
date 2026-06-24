@@ -8,7 +8,6 @@ import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
-import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.util.HashSet;
 
@@ -16,27 +15,24 @@ import java.util.HashSet;
 public class UserDataInitializerConfig {
     @Bean
     @Order(2)
-    public CommandLineRunner initAdmin(
-            UserRepo userRepo,
-            RoleRepo roleRepo,
-            PasswordEncoder passwordEncoder) {
+    public CommandLineRunner initAdmin(UserRepo userRepo, RoleRepo roleRepo) {
 
         return args -> {
             User admin = userRepo.findByUsername("admin").orElseGet(User::new);
             admin.setUsername("admin");
-            admin.setEmail("admin@alerthub.local");
-            admin.setPhone("0500000000");
+            admin.setEmail("aymanw199816@hotmail.com");
+            admin.setPhone("0508241000");
 
             if (admin.getPassword() == null || !admin.getPassword().startsWith("$2")) {
-                admin.setPassword(passwordEncoder.encode("admin"));
+                admin.setPassword("admin");
             }
 
-            admin.setRoles(new HashSet<>(roleRepo.findAllByOrderByIdAsc()));
+            admin.setRoles(new HashSet<>(roleRepo.findAllByOrderById()));
             userRepo.save(admin);
 
             userRepo.findAll().forEach(user -> {
                 if (user.getPassword() != null && !user.getPassword().startsWith("$2")) {
-                    user.setPassword(passwordEncoder.encode(user.getPassword()));
+                    user.setPassword(user.getPassword());
                     userRepo.save(user);
                 }
             });

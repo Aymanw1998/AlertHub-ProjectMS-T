@@ -67,10 +67,10 @@ public class JwtAuthenticationFilter implements GlobalFilter, Ordered {
         return "/api/auth/signup".equals(path)
                 || "/api/auth/signin".equals(path)
                 || path.startsWith("/fallback/")
-                || path.startsWith("/mst-gateway-sw-ui")
-                || path.startsWith("/mst-gateway-api-docs")
+                || path.startsWith("/mst-")
                 || path.startsWith("/swagger-ui")
-                || path.startsWith("/webjars");
+                || path.startsWith("/webjars")
+                || path.startsWith("/v3/api-docs");
     }
 
     private Mono<Void> reject(ServerWebExchange exchange, HttpStatus status) {

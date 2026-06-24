@@ -11,7 +11,6 @@ import com.mst.dto.UserSecurityResponseDTO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
@@ -24,8 +23,6 @@ public class AuthenticationService {
 
     @Autowired
     private RestTemplate restTemplate;
-    @Autowired
-    private PasswordEncoder passwordEncoder;
     @Autowired
     private JwtService jwtService;
 
@@ -58,8 +55,8 @@ public class AuthenticationService {
             }
 
             return new SignupResponseDTO(
-                    user.id(),
-                    user.username(),
+                    user.getId(),
+                    user.getUsername(),
                     "User registered successfully"
             );
         } catch (HttpClientErrorException e) {
@@ -79,21 +76,20 @@ public class AuthenticationService {
 
         try {
             UserSecurityResponseDTO user = restTemplate.getForObject(
-                    userServiceUrl + "/api/user/internal/security/{username}",
-                    UserSecurityResponseDTO.class,
-                    request.getUsername()
+                    userServiceUrl + "/api/user/internal/security/" + request.getUsername(),
+                    UserSecurityResponseDTO.class
             );
 
-            if (user == null || !passwordEncoder.matches(request.getPassword(), user.password())) {
+            if (user == null || !request.getPassword().equals(user.getPassword())) {
                 throw invalidCredentials();
             }
 
-            List<String> roles = user.roles() == null
+            List<String> roles = user.getRoles() == null
                     ? List.of()
-                    : user.roles().stream().map(RoleResponseDTO::role).toList();
+                    : user.getRoles().stream().map(RoleResponseDTO::getRole).toList();
 
-            String token = jwtService.generateToken(user.username(), user.id(), roles);
-            return new SigninResponseDTO(token, user.id(), user.username(), roles);
+            String token = jwtService.generateToken(user.getUsername(), user.getId(), roles);
+            return new SigninResponseDTO(token, user.getId(), user.getUsername(), roles);
         } catch (HttpClientErrorException e) {
             throw invalidCredentials();
         }

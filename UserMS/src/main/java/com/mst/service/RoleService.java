@@ -16,17 +16,12 @@ public class RoleService {
     @Autowired
     private RoleRepo roleRepo;
 
-    public List<RoleResponseDTO> getAll() {
-        return roleRepo.findAllByOrderByIdAsc()
-                .stream()
-                .map(RoleMapper::toDTO)
-                .toList();
+    public List<Role> getAll() {
+        return roleRepo.findAllByOrderById();
     }
 
-    public RoleResponseDTO getOneById(Long id) throws RoleNotFoundException {
-        Role role = roleRepo.findById(id)
+    public Role getOneById(Long id) throws RoleNotFoundException {
+        return roleRepo.findById(id)
                 .orElseThrow(() -> new RoleNotFoundException("Role with id " + id + " not found"));
-
-        return RoleMapper.toDTO(role);
     }
 }

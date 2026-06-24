@@ -13,7 +13,6 @@ public class RoleDataInitializerConfig {
     @Order(1)
     public CommandLineRunner initRoles(RoleRepo roleRepo) {
         return args -> {
-            createRoleIfNotExists(roleRepo, "admin");
             createRoleIfNotExists(roleRepo,"createAction");
             createRoleIfNotExists(roleRepo,"updateAction");
             createRoleIfNotExists(roleRepo,"deleteAction");
@@ -28,10 +27,10 @@ public class RoleDataInitializerConfig {
     }
 
     private void createRoleIfNotExists(RoleRepo roleRepo, String roleName) {
-        if (!roleRepo.existsByRole(roleName)) {
-            Role role = new Role();
-            role.setRole(roleName);
-            roleRepo.save(role);
-        }
+        if (roleRepo.existsByRole(roleName)) return;
+        Role role = new Role();
+        role.setRole(roleName);
+        roleRepo.save(role);
+
     }
 }

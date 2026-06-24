@@ -1,11 +1,18 @@
 package com.mst.dto;
 
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.Setter;
+
 import java.util.List;
 
-public record UserResponseDTO(
-        Long id,
-        String username,
-        String email,
-        String phone,
-        List<RoleResponseDTO> roles) {
+@Getter
+@Setter
+@AllArgsConstructor
+public class UserResponseDTO{
+    private Long id;
+    private String username;
+    private  String email;
+    private String phone;
+    private List<RoleResponseDTO> roles;
 }

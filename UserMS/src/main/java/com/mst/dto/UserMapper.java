@@ -6,7 +6,7 @@ import org.springframework.stereotype.Component;
 
 import java.util.List;
 
-
+@Component
 public class UserMapper {
 
     public static User toEntity(UserRequestDTO dto) {
@@ -34,15 +34,19 @@ public class UserMapper {
                 roles
         );
     }
+    public static UserSecurityResponseDTO toSecurityDTO(User user) {
+        List<RoleResponseDTO> roles = user.getRoles()
+                .stream()
+                .map(RoleMapper::toDTO)
+                .toList();
 
-    public static void updateEntity(User user, UserRequestDTO dto) {
-        user.setUsername(dto.getUsername());
-        user.setEmail(dto.getEmail());
-        user.setPhone(dto.getPhone());
-
-        if (dto.getPassword() != null && !dto.getPassword().isBlank()) {
-            user.setPassword(dto.getPassword());
-        }
+        return new UserSecurityResponseDTO(
+                user.getId(),
+                user.getUsername(),
+                user.getEmail(),
+                user.getPhone(),
+                user.getPassword(),
+                roles
+        );
     }
-
 }

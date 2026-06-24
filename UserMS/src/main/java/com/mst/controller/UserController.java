@@ -1,11 +1,13 @@
 package com.mst.controller;
 
+import com.mst.dto.UserMapper;
 import com.mst.dto.UserRequestDTO;
 import com.mst.dto.UserResponseDTO;
 import com.mst.dto.UserSecurityResponseDTO;
 import com.mst.exceptions.InvalidUserException;
 import com.mst.exceptions.UserAlreadyExistsException;
 import com.mst.exceptions.UserNotFoundException;
+import com.mst.model.User;
 import com.mst.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -19,26 +21,34 @@ import java.util.List;
 public class UserController {
 
     @Autowired
-    private UserService userService;
+    private UserService service;
 
     @GetMapping("/get-all")
     public ResponseEntity<List<UserResponseDTO>> getAll() {
-        return ResponseEntity.ok(userService.getAll());
+        List<User> users = service.getAll();
+        List<UserResponseDTO> dto = users.stream().map(UserMapper::toDTO).toList();
+        return ResponseEntity.ok(dto);
     }
 
     @GetMapping("/get-one/{id}")
     public ResponseEntity<?> getOneById(@PathVariable Long id) {
         try {
-            return ResponseEntity.ok(userService.getOneById(id));
+            User user = service.getOneById(id);
+            UserResponseDTO dto = UserMapper.toDTO(user);
+            return ResponseEntity.ok(dto);
         } catch (UserNotFoundException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
         }
     }
 
+
+
     @GetMapping("/get-by-username/{username}")
     public ResponseEntity<?> getOneByUsername(@PathVariable String username) {
         try {
-            return ResponseEntity.ok(userService.getOneByUsername(username));
+            User user = service.getOneByUsername(username);
+            UserResponseDTO dto = UserMapper.toDTO(user);
+            return ResponseEntity.ok(dto);
         } catch (InvalidUserException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
         } catch (UserNotFoundException e) {
@@ -49,8 +59,9 @@ public class UserController {
     @GetMapping("/internal/security/{username}")
     public ResponseEntity<?> getUserForSecurity(@PathVariable String username) {
         try {
-            UserSecurityResponseDTO user = userService.getUserForSecurity(username);
-            return ResponseEntity.ok(user);
+            User user = service.getOneByUsername(username);
+            UserSecurityResponseDTO dto = UserMapper.toSecurityDTO(user);
+            return ResponseEntity.ok(dto);
         } catch (InvalidUserException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
         } catch (UserNotFoundException e) {
@@ -61,7 +72,9 @@ public class UserController {
     @PostMapping("/internal/register")
     public ResponseEntity<?> register(@RequestBody UserRequestDTO dto) {
         try {
-            return ResponseEntity.status(HttpStatus.CREATED).body(userService.register(dto));
+            User user = service.create(UserMapper.toEntity(dto));
+            UserResponseDTO dtoNew = UserMapper.toDTO(user);
+            return ResponseEntity.status(HttpStatus.CREATED).body(dtoNew);
         } catch (InvalidUserException e) {
             return ResponseEntity.badRequest().body(e.getMessage());
         } catch (UserAlreadyExistsException e) {
@@ -72,33 +85,35 @@ public class UserController {
     @PostMapping("/create")
     public ResponseEntity<?> create(@RequestBody UserRequestDTO dto) {
         try {
-            UserResponseDTO createdUser = userService.create(dto);
-            return ResponseEntity.ok(createdUser);
+            User user = service.create(UserMapper.toEntity(dto));
+            UserResponseDTO dtoNew = UserMapper.toDTO(user);
+            return ResponseEntity.status(HttpStatus.CREATED).body(dtoNew);
         } catch (InvalidUserException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
         } catch (UserAlreadyExistsException e) {
-            return ResponseEntity.status(409).body(e.getMessage());
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(e.getMessage());
         }
     }
 
     @PutMapping("/update/{id}")
     public ResponseEntity<?> update(@PathVariable Long id, @RequestBody UserRequestDTO dto) {
         try {
-            UserResponseDTO updatedUser = userService.update(id, dto);
-            return ResponseEntity.ok(updatedUser);
+            User user = service.update(id, UserMapper.toEntity(dto));
+            UserResponseDTO dtoNew = UserMapper.toDTO(user);
+            return ResponseEntity.ok(dtoNew);
         } catch (InvalidUserException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
         } catch (UserNotFoundException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
         } catch (UserAlreadyExistsException e) {
-            return ResponseEntity.status(409).body(e.getMessage());
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(e.getMessage());
         }
     }
 
     @DeleteMapping("/delete/{id}")
     public ResponseEntity<?> delete(@PathVariable Long id) {
         try {
-            userService.delete(id);
+            service.delete(id);
             return ResponseEntity.ok("User deleted successfully");
         } catch (InvalidUserException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
