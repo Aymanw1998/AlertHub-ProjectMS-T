@@ -141,6 +141,7 @@
                 </executions>
             </plugin>
         </plugins>
+        <finalName>GatewayMS</finalName>
     </build>
 
 </project>

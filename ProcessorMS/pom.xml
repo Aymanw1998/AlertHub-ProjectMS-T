@@ -136,6 +136,7 @@
                 </executions>
             </plugin>
         </plugins>
+        <finalName>ProcessorMS</finalName>
     </build>
 
 </project>

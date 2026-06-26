@@ -124,6 +124,7 @@
                 </executions>
             </plugin>
         </plugins>
+        <finalName>EmailMS</finalName>
     </build>
 
 </project>

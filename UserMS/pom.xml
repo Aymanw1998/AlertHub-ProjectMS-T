@@ -126,6 +126,7 @@
                 </executions>
             </plugin>
         </plugins>
+        <finalName>UserMS</finalName>
     </build>
 
 </project>

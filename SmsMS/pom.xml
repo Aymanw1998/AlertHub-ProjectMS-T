@@ -126,6 +126,7 @@
                 </executions>
             </plugin>
         </plugins>
+        <finalName>SmsMS</finalName>
     </build>
 
 </project>
