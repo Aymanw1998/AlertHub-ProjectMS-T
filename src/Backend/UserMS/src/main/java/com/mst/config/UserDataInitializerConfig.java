@@ -23,14 +23,15 @@ public class UserDataInitializerConfig {
             admin.setUsername("admin");
             admin.setEmail("aymanw199816@hotmail.com");
             admin.setPhone("0508241000");
-            admin.setPassword(passwordEncoder.encode("admin"));
-
+            if (admin.getPassword() == null || !admin.getPassword().startsWith("$2")) {
+                admin.setPassword(passwordEncoder.encode("admin"));
+            }
             admin.setRoles(new HashSet<>(roleRepo.findAllByOrderById()));
             userRepo.save(admin);
 
             userRepo.findAll().forEach(user -> {
                 if (user.getPassword() != null && !user.getPassword().startsWith("$2")) {
-                    user.setPassword(user.getPassword());
+                    user.setPassword(passwordEncoder.encode(user.getPassword()));
                     userRepo.save(user);
                 }
             });

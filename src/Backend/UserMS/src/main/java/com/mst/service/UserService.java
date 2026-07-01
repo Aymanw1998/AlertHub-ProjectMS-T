@@ -16,7 +16,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
-
+import java.util.stream.Collectors;
 @Service
 public class UserService {
     //finalin java == const ->משתנה לא ניתן לשינוי
@@ -54,12 +54,12 @@ public class UserService {
         validateRequiredFields(user, true);
         validateUnique(user.getUsername(), null);
 
-        if (user.getRoles() != null) {
-            Set<Role> roles = resolveRoles(user.getRoles().stream().map(r->r.getRole()).toList());
-            addReadRole(roles);
-            user.setRoles(roles);
-        }
-        user.setPassword(passwordEncoder.encode(user.getPassword()));
+        Set<Role> roles = user.getRoles() == null
+                ? resolveRoles(null)
+                : resolveRoles(user.getRoles().stream().map(r -> r.getRole()).toList());
+        addReadRole(roles);
+        user.setRoles(roles);
+        user.setPassword(encodePasswordIfNeeded(user.getPassword()));
         return userRepo.save(user);
     }
 
@@ -77,8 +77,8 @@ public class UserService {
         if(!isBlank(info.getPhone())){
             user.setPhone(info.getPhone());
         }
-        if (isBlank(info.getPassword())) {
-            user.setPassword(passwordEncoder.encode(info.getPassword()));
+        if (!isBlank(info.getPassword())) {
+            user.setPassword(encodePasswordIfNeeded(info.getPassword()));
         }
 
         if (info.getRoles() != null) {
@@ -97,16 +97,58 @@ public class UserService {
 
     public void delete(Long id) throws UserNotFoundException, InvalidUserException {
         User user = getOneById(id);
-        if (user.getUsername() == "admin") {
+        if ("admin".equals(user.getUsername())) {
             throw new InvalidUserException("Admin user cannot be deleted");
         }
         userRepo.delete(user);
     }
 
-    public User addRoles(Long id, RolesRequestDTO roles) throws UserNotFoundException {
+    public User addRoles(Long id, List<String> roleNames)
+            throws UserNotFoundException, InvalidUserException {
+
         User user = getOneById(id);
 
-        if(roles.getRoles().)
+        Set<Role> rolesToAdd = resolveRoles(roleNames);
+        if(rolesToAdd.isEmpty()) return user;
+        Set<Role> roles = user.getRoles() == null
+                ? new HashSet<>()
+                : new HashSet<>(user.getRoles());
+
+        roles.addAll(rolesToAdd);
+
+        addReadRole(roles);
+        user.setRoles(roles);
+
+        return userRepo.save(user);
+    }
+
+    public User removeRoles(Long id, List<String> roleNames)
+            throws UserNotFoundException, InvalidUserException {
+
+        User user = getOneById(id);
+
+        Set<Role> rolesToRemove = resolveRoles(roleNames);
+        if(rolesToRemove.isEmpty())
+            return user;
+
+        Set<Role> filteredRolesToRemove = rolesToRemove.stream()
+                .filter(role -> !DEFAULT_ROLE.equals(role.getRole()))
+                .collect(Collectors.toSet());
+
+
+        Set<Role> roles = user.getRoles() == null
+                ? new HashSet<>()
+                : new HashSet<>(user.getRoles());
+
+        roles.removeIf(role ->
+                filteredRolesToRemove.stream()
+                        .anyMatch(roleToRemove -> roleToRemove.getRole().equals(role.getRole()))
+        );
+
+        addReadRole(roles);
+        user.setRoles(roles);
+
+        return userRepo.save(user);
     }
 
     private Set<Role> resolveRoles(List<String> roleNames) throws InvalidUserException {
@@ -133,15 +175,22 @@ public class UserService {
         }
     }
 
+    private String encodePasswordIfNeeded(String password) {
+        if (password.startsWith("$2")) {
+            return password;
+        }
+        return passwordEncoder.encode(password);
+    }
+
     private void validateRequiredFields(User user, boolean passwordRequired)
             throws InvalidUserException {
 
 
         if (user == null
                 || (isBlank(user.getUsername())
-                && isBlank(user.getEmail())
-                && isBlank(user.getPhone())
-                && (passwordRequired && isBlank(user.getPassword())))) {
+                || isBlank(user.getEmail())
+                || isBlank(user.getPhone())
+                || (passwordRequired && isBlank(user.getPassword())))) {
             throw new InvalidUserException("Username, email, phone and password are required");
         }
     }

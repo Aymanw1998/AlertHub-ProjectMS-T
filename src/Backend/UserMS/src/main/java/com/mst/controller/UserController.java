@@ -1,9 +1,6 @@
 package com.mst.controller;
 
-import com.mst.dto.UserMapper;
-import com.mst.dto.UserRequestDTO;
-import com.mst.dto.UserResponseDTO;
-import com.mst.dto.UserSecurityResponseDTO;
+import com.mst.dto.*;
 import com.mst.exceptions.InvalidUserException;
 import com.mst.exceptions.UserAlreadyExistsException;
 import com.mst.exceptions.UserNotFoundException;
@@ -122,16 +119,35 @@ public class UserController {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
         }
     }
-    @PostMapping("/add-permissions/{id}")
-    public ResponseEntity<?> create(@RequestBody UserRequestDTO dto) {
+    @PatchMapping("/add-roles/{id}")
+    public ResponseEntity<?> addRoles(@PathVariable Long id, @RequestBody RolesRequestDTO dto) {
         try {
-            User user = service.create(UserMapper.toEntity(dto));
+            User user = service.addRoles(id, dto.getRoles());
             UserResponseDTO dtoNew = UserMapper.toDTO(user);
-            return ResponseEntity.status(HttpStatus.CREATED).body(dtoNew);
+            return ResponseEntity.ok(dtoNew);
+
         } catch (InvalidUserException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
-        } catch (UserAlreadyExistsException e) {
-            return ResponseEntity.status(HttpStatus.CONFLICT).body(e.getMessage());
+
+        } catch (UserNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
         }
     }
+
+    @PatchMapping("/remove-roles/{id}")
+    public ResponseEntity<?> removeRoles(@PathVariable Long id, @RequestBody RolesRequestDTO dto) {
+        try {
+            User user = service.removeRoles(id, dto.getRoles());
+            UserResponseDTO dtoNew = UserMapper.toDTO(user);
+            return ResponseEntity.ok(dtoNew);
+
+        } catch (InvalidUserException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+
+        } catch (UserNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+        }
+    }
+
+
 }

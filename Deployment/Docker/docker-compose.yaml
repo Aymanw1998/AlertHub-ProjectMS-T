@@ -70,20 +70,24 @@ services:
     container_name: kafka
     ports:
       - "9092:9092"
+      - "9094:9094"
     environment:
       KAFKA_NODE_ID: 1
       KAFKA_PROCESS_ROLES: broker,controller
-      KAFKA_LISTENERS: PLAINTEXT://:9092,CONTROLLER://:9093
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+
+      KAFKA_LISTENERS: INTERNAL://:9092,EXTERNAL://:9094,CONTROLLER://:9093
+      KAFKA_ADVERTISED_LISTENERS: INTERNAL://kafka:9092,EXTERNAL://localhost:9094
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: INTERNAL:PLAINTEXT,EXTERNAL:PLAINTEXT,CONTROLLER:PLAINTEXT
+
+      KAFKA_INTER_BROKER_LISTENER_NAME: INTERNAL
       KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
-      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT
       KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:9093
+
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
       KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
       KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
-
   user-ms:
-    image: 209138155/alerthub-user-ms:v4
+    image: 209138155/alerthub-user-ms:v5
     container_name: user-ms
     depends_on:
       user-db:
@@ -96,7 +100,7 @@ services:
       - "1009:1009"
 
   security-ms:
-    image: 209138155/alerthub-security-ms:v4
+    image: 209138155/alerthub-security-ms:v5
     container_name: security-ms
     depends_on:
       - user-ms
@@ -108,7 +112,7 @@ services:
       - "1008:1008"
 
   loader-ms:
-    image: 209138155/alerthub-loader-ms:v4
+    image: 209138155/alerthub-loader-ms:v5
     container_name: loader-ms
     depends_on:
       loader-db:
@@ -125,7 +129,7 @@ services:
       - "1010:1010"
 
   metric-ms:
-    image: 209138155/alerthub-metric-ms:v4
+    image: 209138155/alerthub-metric-ms:v5
     container_name: metric-ms
     depends_on:
       metric-db:
@@ -138,7 +142,7 @@ services:
       - "1011:1011"
 
   action-ms:
-    image: 209138155/alerthub-action-ms:v4
+    image: 209138155/alerthub-action-ms:v5
     container_name: action-ms
     depends_on:
       action-db:
@@ -154,7 +158,7 @@ services:
       - "1012:1012"
 
   logger-ms:
-    image: 209138155/alerthub-logger-ms:v4
+    image: 209138155/alerthub-logger-ms:v5
     container_name: logger-ms
     depends_on:
       - logger-db
@@ -164,7 +168,7 @@ services:
       - "1016:1016"
 
   processor-ms:
-    image: 209138155/alerthub-processor-ms:v4
+    image: 209138155/alerthub-processor-ms:v5
     container_name: processor-ms
     depends_on:
       - kafka
@@ -180,7 +184,7 @@ services:
       - "1013:1013"
 
   email-ms:
-    image: 209138155/alerthub-email-ms:v4
+    image: 209138155/alerthub-email-ms:v5
     container_name: email-ms
     depends_on:
       - kafka
@@ -196,7 +200,7 @@ services:
       - "1014:1014"
 
   sms-ms:
-    image: 209138155/alerthub-sms-ms:v4
+    image: 209138155/alerthub-sms-ms:v5
     container_name: sms-ms
     depends_on:
       - kafka
@@ -212,7 +216,7 @@ services:
       - "1015:1015"
 
   evaluation-ms:
-    image: 209138155/alerthub-evaluation-ms:v4
+    image: 209138155/alerthub-evaluation-ms:v5
     container_name: evaluation-ms
     depends_on:
       - kafka
@@ -225,7 +229,7 @@ services:
       - "1017:1017"
 
   gateway-ms:
-    image: 209138155/alerthub-gateway-ms:v4
+    image: 209138155/alerthub-gateway-ms:v5
     container_name: gateway-ms
     depends_on:
       - security-ms

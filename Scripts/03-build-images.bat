@@ -3,7 +3,7 @@ setlocal EnableDelayedExpansion
 
 set "PROJECT_ROOT=%CD%"
 set DOCKER_USER=209138155
-set TAG=v4
+set TAG=v5
 
 set SERVICES=SecurityMS:alerthub-security-ms UserMS:alerthub-user-ms GatewayMS:alerthub-gateway-ms LoaderMS:alerthub-loader-ms MetricMS:alerthub-metric-ms ActionMS:alerthub-action-ms ProcessorMS:alerthub-processor-ms EmailMS:alerthub-email-ms SmsMS:alerthub-sms-ms LoggerMS:alerthub-logger-ms EvaluationMS:alerthub-evaluation-ms
 
@@ -27,12 +27,12 @@ for %%P in (%SERVICES%) do (
         echo Image: !IMAGE_NAME!
         echo -------------------------------
 
-        if not exist "%PROJECT_ROOT%\..\src\Backend\%%A\target\*.jar" (
+        if not exist "%PROJECT_ROOT%\..\src\backend\%%A\target\*.jar" (
             echo Missing JAR for %%A. Run 01-build-jars.bat first.
             exit /b 1
         )
 
-        cd /d "%PROJECT_ROOT%\..\src\Backend\%%A"
+        cd /d "%PROJECT_ROOT%\..\src\backend\%%A"
 
         docker build -t !IMAGE_NAME! .
         if errorlevel 1 (
