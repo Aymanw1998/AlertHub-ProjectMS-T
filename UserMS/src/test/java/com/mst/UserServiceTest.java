@@ -10,6 +10,7 @@ import com.mst.service.UserService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
 import java.util.Optional;
@@ -29,6 +30,9 @@ class UserServiceTest {
     @MockitoBean
     private RoleRepo roleRepo;
 
+    @MockitoBean
+    private PasswordEncoder passwordEncoder;
+
     @Autowired
     private UserService userService;
 
@@ -38,14 +42,28 @@ class UserServiceTest {
         Role readRole = role("read");
 
         when(userRepo.findByUsername("ayman")).thenReturn(Optional.empty());
+        when(userRepo.findByEmail("ayman@example.com")).thenReturn(Optional.empty());
         when(roleRepo.findByRole("read")).thenReturn(Optional.of(readRole));
+        when(passwordEncoder.encode("123456")).thenReturn("$2encoded-password");
         when(userRepo.save(user)).thenReturn(user);
 
         User saved = userService.create(user);
 
         assertEquals("ayman", saved.getUsername());
+        assertEquals("$2encoded-password", saved.getPassword());
         assertTrue(saved.getRoles().stream().anyMatch(role -> "read".equals(role.getRole())));
         verify(userRepo).save(user);
+    }
+
+    @Test
+    void delete_whenUserIsAdmin_throwsInvalidUserException() {
+        User admin = validUser();
+        admin.setId(1L);
+        admin.setUsername("admin");
+
+        when(userRepo.findById(1L)).thenReturn(Optional.of(admin));
+
+        assertThrows(InvalidUserException.class, () -> userService.delete(1L));
     }
 
     @Test
@@ -55,6 +73,18 @@ class UserServiceTest {
         existing.setId(1L);
 
         when(userRepo.findByUsername("ayman")).thenReturn(Optional.of(existing));
+
+        assertThrows(UserAlreadyExistsException.class, () -> userService.create(user));
+    }
+
+    @Test
+    void create_whenEmailAlreadyExists_throwsUserAlreadyExistsException() {
+        User user = validUser();
+        User existing = validUser();
+        existing.setId(1L);
+
+        when(userRepo.findByUsername("ayman")).thenReturn(Optional.empty());
+        when(userRepo.findByEmail("ayman@example.com")).thenReturn(Optional.of(existing));
 
         assertThrows(UserAlreadyExistsException.class, () -> userService.create(user));
     }

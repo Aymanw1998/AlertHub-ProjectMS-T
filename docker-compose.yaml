@@ -160,6 +160,7 @@ services:
       - logger-db
     environment:
       MONGO_URI: mongodb://logger-db:27017/logger
+      SPRING_DATA_MONGODB_URI: mongodb://logger-db:27017/logger
     ports:
       - "1016:1016"
 

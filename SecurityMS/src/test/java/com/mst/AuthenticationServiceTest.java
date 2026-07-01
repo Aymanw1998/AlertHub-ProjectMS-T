@@ -13,6 +13,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.server.ResponseStatusException;
@@ -39,6 +40,9 @@ class AuthenticationServiceTest {
     @MockitoBean
     private RestTemplate restTemplate;
 
+    @MockitoBean
+    private PasswordEncoder passwordEncoder;
+
     @Autowired
     private JwtService jwtService;
 
@@ -52,7 +56,7 @@ class AuthenticationServiceTest {
                 "ayman",
                 "ayman@example.com",
                 "+972508241000",
-                "123456",
+                "$2encoded-password",
                 List.of(new RoleResponseDTO(1L, "read"))
         );
 
@@ -60,6 +64,7 @@ class AuthenticationServiceTest {
                 "http://localhost:1009/api/user/internal/security/ayman",
                 UserSecurityResponseDTO.class
         )).thenReturn(user);
+        when(passwordEncoder.matches("123456", "$2encoded-password")).thenReturn(true);
 
         SigninResponseDTO response =
                 authenticationService.signin(new SigninRequestDTO("ayman", "123456"));
@@ -77,7 +82,7 @@ class AuthenticationServiceTest {
                 "ayman",
                 "ayman@example.com",
                 "+972508241000",
-                "123456",
+                "$2encoded-password",
                 List.of(new RoleResponseDTO(1L, "read"))
         );
 
@@ -85,6 +90,7 @@ class AuthenticationServiceTest {
                 "http://localhost:1009/api/user/internal/security/ayman",
                 UserSecurityResponseDTO.class
         )).thenReturn(user);
+        when(passwordEncoder.matches("wrong", "$2encoded-password")).thenReturn(false);
 
         ResponseStatusException exception = assertThrows(
                 ResponseStatusException.class,

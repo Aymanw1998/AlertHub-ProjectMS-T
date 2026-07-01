@@ -4,7 +4,9 @@ import com.mst.model.Role;
 import com.mst.model.User;
 import org.springframework.stereotype.Component;
 
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 @Component
 public class UserMapper {
@@ -16,8 +18,26 @@ public class UserMapper {
         user.setEmail(dto.getEmail());
         user.setPhone(dto.getPhone());
         user.setPassword(dto.getPassword());
+        user.setRoles(toRoles(dto.getRoles()));
 
         return user;
+    }
+
+    private static Set<Role> toRoles(List<String> roleNames) {
+        if (roleNames == null) {
+            return null;
+        }
+
+        Set<Role> roles = new HashSet<>();
+        roleNames.stream()
+                .filter(roleName -> roleName != null && !roleName.isBlank())
+                .distinct()
+                .forEach(roleName -> {
+                    Role role = new Role();
+                    role.setRole(roleName);
+                    roles.add(role);
+                });
+        return roles;
     }
 
     public static UserResponseDTO toDTO(User user) {

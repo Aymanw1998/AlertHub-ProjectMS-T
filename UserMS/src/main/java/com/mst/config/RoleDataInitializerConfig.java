@@ -13,6 +13,7 @@ public class RoleDataInitializerConfig {
     @Order(1)
     public CommandLineRunner initRoles(RoleRepo roleRepo) {
         return args -> {
+            createRoleIfNotExists(roleRepo,"admin");
             createRoleIfNotExists(roleRepo,"createAction");
             createRoleIfNotExists(roleRepo,"updateAction");
             createRoleIfNotExists(roleRepo,"deleteAction");

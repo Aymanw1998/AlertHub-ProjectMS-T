@@ -9,6 +9,7 @@ import com.mst.model.User;
 import com.mst.repo.RoleRepo;
 import com.mst.repo.UserRepo;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.HashSet;
@@ -25,6 +26,8 @@ public class UserService {
     private  UserRepo userRepo;
     @Autowired
     private  RoleRepo roleRepo;
+    @Autowired
+    private PasswordEncoder passwordEncoder;
 
 
     public List<User> getAll() {
@@ -50,13 +53,15 @@ public class UserService {
             throws InvalidUserException, UserAlreadyExistsException {
 
         validateRequiredFields(user, true);
-        validateUnique(user.getUsername(), null);
+        validateUnique(user.getUsername(), user.getEmail(), null);
 
-        if (user.getRoles() != null) {
-            Set<Role> roles = resolveRoles(user.getRoles().stream().map(r->r.getRole()).toList());
-            addReadRole(roles);
-            user.setRoles(roles);
-        }
+        Set<Role> roles = user.getRoles() == null
+                ? resolveRoles(null)
+                : resolveRoles(user.getRoles().stream().map(r -> r.getRole()).toList());
+        addReadRole(roles);
+        user.setRoles(roles);
+        user.setPassword(encodePasswordIfNeeded(user.getPassword()));
+
         return userRepo.save(user);
     }
 
@@ -65,7 +70,7 @@ public class UserService {
 
         User user = getOneById(id);
         validateRequiredFields(info, false);
-        validateUnique(info.getUsername(), id);
+        validateUnique(info.getUsername(), info.getEmail(), id);
 
         if(!isBlank(info.getUsername())){
             user.setUsername(info.getUsername());
@@ -74,17 +79,15 @@ public class UserService {
         if(!isBlank(info.getPhone())){
             user.setPhone(info.getPhone());
         }
-        if (isBlank(info.getPassword())) {
-            user.setPassword(info.getPassword());
+        if(!isBlank(info.getEmail())){
+            user.setEmail(info.getEmail());
+        }
+        if (!isBlank(info.getPassword())) {
+            user.setPassword(encodePasswordIfNeeded(info.getPassword()));
         }
 
         if (info.getRoles() != null) {
             Set<Role> roles = resolveRoles(info.getRoles().stream().map(r->r.getRole()).toList());
-            addReadRole(roles);
-            user.setRoles(roles);
-        }
-        else {
-            Set<Role> roles = resolveRoles(null);
             addReadRole(roles);
             user.setRoles(roles);
         }
@@ -94,7 +97,7 @@ public class UserService {
 
     public void delete(Long id) throws UserNotFoundException, InvalidUserException {
         User user = getOneById(id);
-        if (user.getUsername() == "admin") {
+        if ("admin".equals(user.getUsername())) {
             throw new InvalidUserException("Admin user cannot be deleted");
         }
         userRepo.delete(user);
@@ -126,6 +129,13 @@ public class UserService {
         }
     }
 
+    private String encodePasswordIfNeeded(String password) {
+        if (password.startsWith("$2")) {
+            return password;
+        }
+        return passwordEncoder.encode(password);
+    }
+
     private void validateRequiredFields(User user, boolean passwordRequired)
             throws InvalidUserException {
 
@@ -139,11 +149,16 @@ public class UserService {
         }
     }
 
-    private void validateUnique(String username, Long currentId)
+    private void validateUnique(String username, String email, Long currentId)
             throws UserAlreadyExistsException {
         Optional<User> sameUsername = userRepo.findByUsername(username);
         if (sameUsername.isPresent() && !sameUsername.get().getId().equals(currentId)) {
             throw new UserAlreadyExistsException("Username already exists");
+        }
+
+        Optional<User> sameEmail = userRepo.findByEmail(email);
+        if (sameEmail.isPresent() && !sameEmail.get().getId().equals(currentId)) {
+            throw new UserAlreadyExistsException("Email already exists");
         }
     }
 
