@@ -1,40 +1,40 @@
-import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
-import { ProtectedRoute } from './components/ProtectedRoute'
+import { Navigate, Route, Routes } from 'react-router-dom'
+import { DashboardLayout } from './components/layout/DashboardLayout'
+import { ProtectedRoute } from './auth/ProtectedRoute'
 import { DashboardPage } from './pages/DashboardPage'
 import { LoginPage } from './pages/LoginPage'
+import { PlaceholderPage } from './pages/PlaceholderPage'
 import { SignupPage } from './pages/SignupPage'
-import { getToken } from './lib/tokenStorage'
 
 function App() {
-  const isAuthenticated = Boolean(getToken())
-
   return (
-    <BrowserRouter>
-      <Routes>
+    <Routes>
+      <Route path="/login" element={<LoginPage />} />
+      <Route path="/signup" element={<SignupPage />} />
+
+      <Route
+        path="/"
+        element={
+          <ProtectedRoute>
+            <DashboardLayout />
+          </ProtectedRoute>
+        }
+      >
+        <Route index element={<Navigate to="/dashboard" replace />} />
+        <Route path="dashboard" element={<DashboardPage />} />
+        <Route path="loader" element={<PlaceholderPage title="Loader" />} />
+        <Route path="metrics" element={<PlaceholderPage title="Metrics" />} />
+        <Route path="actions" element={<PlaceholderPage title="Actions" />} />
+        <Route path="logs" element={<PlaceholderPage title="Logs" />} />
         <Route
-          path="/"
-          element={
-            <Navigate to={isAuthenticated ? '/dashboard' : '/login'} replace />
-          }
+          path="evaluation"
+          element={<PlaceholderPage title="Evaluation" />}
         />
-        <Route
-          path="/login"
-          element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <LoginPage />}
-        />
-        <Route
-          path="/signup"
-          element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <SignupPage />}
-        />
-        <Route
-          path="/dashboard"
-          element={
-            <ProtectedRoute>
-              <DashboardPage />
-            </ProtectedRoute>
-          }
-        />
-      </Routes>
-    </BrowserRouter>
+        <Route path="users" element={<PlaceholderPage title="Users" />} />
+      </Route>
+
+      <Route path="*" element={<Navigate to="/dashboard" replace />} />
+    </Routes>
   )
 }
 

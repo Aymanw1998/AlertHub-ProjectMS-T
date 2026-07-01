@@ -1,72 +1,84 @@
-import { useState } from 'react'
-import type { FormEvent } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
-import { login } from '../lib/authApi'
-import { setToken } from '../lib/tokenStorage'
+import { useState, type FormEvent } from 'react'
+import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom'
+import { useAuth } from '../auth/AuthProvider'
 
-const ADMIN_USERNAME = 'admin'
-const ADMIN_PASSWORD = 'admin'
+type RouterState = {
+  from?: {
+    pathname?: string
+  }
+}
 
 export function LoginPage() {
+  const { isAuthenticated, signInWithPassword } = useAuth()
   const navigate = useNavigate()
-  const [username, setUsername] = useState(ADMIN_USERNAME)
-  const [password, setPassword] = useState(ADMIN_PASSWORD)
-  const [error, setError] = useState('')
-  const [isSubmitting, setIsSubmitting] = useState(false)
+  const location = useLocation()
+  const state = location.state as RouterState | null
 
-  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  const [username, setUsername] = useState('')
+  const [password, setPassword] = useState('')
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [errorMessage, setErrorMessage] = useState<string | null>(null)
+
+  const fromPath = state?.from?.pathname || '/dashboard'
+
+  if (isAuthenticated) {
+    return <Navigate to="/dashboard" replace />
+  }
+
+  async function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
-    setError('')
+    setErrorMessage(null)
     setIsSubmitting(true)
 
     try {
-      const token = await login({ username, password })
-      setToken(token)
-      navigate('/dashboard', { replace: true })
-    } catch (submitError) {
-      if (submitError instanceof Error) {
-        setError(submitError.message)
-      } else {
-        setError('Login failed.')
-      }
+      await signInWithPassword(username, password)
+      navigate(fromPath, { replace: true })
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : 'Signin failed. Try again.'
+      setErrorMessage(message)
     } finally {
       setIsSubmitting(false)
     }
   }
 
   return (
-    <main className="auth-shell">
-      <section className="auth-card">
-        <h1>Login</h1>
-        <p className="muted">Use admin/admin for local testing.</p>
-        <form onSubmit={handleSubmit} className="auth-form">
-          <label>
-            Username
-            <input
-              type="text"
-              value={username}
-              onChange={(event) => setUsername(event.target.value)}
-              required
-            />
-          </label>
-          <label>
-            Password
-            <input
-              type="password"
-              value={password}
-              onChange={(event) => setPassword(event.target.value)}
-              required
-            />
-          </label>
-          {error && <p className="error">{error}</p>}
-          <button type="submit" disabled={isSubmitting}>
-            {isSubmitting ? 'Signing in...' : 'Sign in'}
-          </button>
-        </form>
-        <p className="muted">
-          No account yet? <Link to="/signup">Sign up</Link>
+    <div className="auth-container">
+      <form className="auth-card" onSubmit={onSubmit}>
+        <h1>AlertHub Login</h1>
+        <p>Sign in through GatewayMS to access the dashboard.</p>
+
+        <label className="form-field">
+          Username
+          <input
+            autoComplete="username"
+            onChange={(event) => setUsername(event.target.value)}
+            required
+            value={username}
+          />
+        </label>
+
+        <label className="form-field">
+          Password
+          <input
+            autoComplete="current-password"
+            onChange={(event) => setPassword(event.target.value)}
+            required
+            type="password"
+            value={password}
+          />
+        </label>
+
+        {errorMessage ? <p className="error-text">{errorMessage}</p> : null}
+
+        <button disabled={isSubmitting} type="submit">
+          {isSubmitting ? 'Signing in...' : 'Sign in'}
+        </button>
+
+        <p className="auth-link">
+          Need an account? <Link to="/signup">Create one</Link>
         </p>
-      </section>
-    </main>
+      </form>
+    </div>
   )
 }

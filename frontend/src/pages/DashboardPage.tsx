@@ -1,27 +1,21 @@
-import { useNavigate } from 'react-router-dom'
-import { clearToken, getToken } from '../lib/tokenStorage'
+import { useAuth } from '../auth/AuthProvider'
 
 export function DashboardPage() {
-  const navigate = useNavigate()
-  const token = getToken()
-
-  function handleLogout() {
-    clearToken()
-    navigate('/login', { replace: true })
-  }
+  const { auth } = useAuth()
 
   return (
-    <main className="auth-shell">
-      <section className="auth-card">
-        <h1>Dashboard</h1>
-        <p className="muted">You are logged in.</p>
-        <p className="token-preview">
-          JWT: <code>{token ?? 'No token found'}</code>
-        </p>
-        <button type="button" onClick={handleLogout}>
-          Logout
-        </button>
-      </section>
-    </main>
+    <div className="card">
+      <h2>Welcome to AlertHub</h2>
+      <p>
+        Frontend requests are configured to use GatewayMS at
+        <code> http://localhost:1007</code>.
+      </p>
+      <p>
+        Current user ID: <strong>{auth?.userId}</strong>
+      </p>
+      <p>
+        Roles: <strong>{auth?.roles.join(', ') || 'none'}</strong>
+      </p>
+    </div>
   )
 }
