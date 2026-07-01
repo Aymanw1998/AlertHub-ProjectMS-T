@@ -1,0 +1,254 @@
+services:
+  user-db:
+    image: mysql:8.0
+    container_name: user-db
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: UserDB
+    ports:
+      - "3307:3306"
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-proot"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  loader-db:
+    image: mysql:8.0
+    container_name: loader-db
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: LoaderDB
+    ports:
+      - "3308:3306"
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-proot"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  metric-db:
+    image: mysql:8.0
+    container_name: metric-db
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: MetricDB
+    ports:
+      - "3309:3306"
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-proot"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  action-db:
+    image: mysql:8.0
+    container_name: action-db
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: ActionDB
+    ports:
+      - "3310:3306"
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-proot"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  logger-db:
+    image: mongo:8.3.4
+    container_name: logger-db
+    ports:
+      - "27018:27017"
+
+  redis:
+    image: redis:7.4-alpine
+    container_name: redis
+
+  kafka:
+    image: apache/kafka:4.3.1
+    container_name: kafka
+    ports:
+      - "9092:9092"
+    environment:
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_LISTENERS: PLAINTEXT://:9092,CONTROLLER://:9093
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:9093
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+
+  user-ms:
+    image: 209138155/alerthub-user-ms:v4
+    container_name: user-ms
+    depends_on:
+      user-db:
+        condition: service_healthy
+    environment:
+      USER_DB_URL: jdbc:mysql://user-db:3306/UserDB?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+      MYSQL_USERNAME: root
+      MYSQL_PASSWORD: root
+    ports:
+      - "1009:1009"
+
+  security-ms:
+    image: 209138155/alerthub-security-ms:v4
+    container_name: security-ms
+    depends_on:
+      - user-ms
+    environment:
+      USER_URL: http://user-ms:1009
+      JWT_SECRET: AlertHubSecuritySecretKey19981998
+      JWT_EXPIRATION: 3600000
+    ports:
+      - "1008:1008"
+
+  loader-ms:
+    image: 209138155/alerthub-loader-ms:v4
+    container_name: loader-ms
+    depends_on:
+      loader-db:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    environment:
+      LOADER_DB_URL: jdbc:mysql://loader-db:3306/LoaderDB?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+      MYSQL_USERNAME: root
+      MYSQL_PASSWORD: root
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+    ports:
+      - "1010:1010"
+
+  metric-ms:
+    image: 209138155/alerthub-metric-ms:v4
+    container_name: metric-ms
+    depends_on:
+      metric-db:
+        condition: service_healthy
+    environment:
+      METRIC_DB_URL: jdbc:mysql://metric-db:3306/MetricDB?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+      MYSQL_USERNAME: root
+      MYSQL_PASSWORD: root
+    ports:
+      - "1011:1011"
+
+  action-ms:
+    image: 209138155/alerthub-action-ms:v4
+    container_name: action-ms
+    depends_on:
+      action-db:
+        condition: service_healthy
+      kafka:
+        condition: service_started
+    environment:
+      KAFKA_SERVERS: kafka:9092
+      ACTION_DB_URL: jdbc:mysql://action-db:3306/ActionDB?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+      MYSQL_USERNAME: root
+      MYSQL_PASSWORD: root
+    ports:
+      - "1012:1012"
+
+  logger-ms:
+    image: 209138155/alerthub-logger-ms:v4
+    container_name: logger-ms
+    depends_on:
+      - logger-db
+    environment:
+      MONGO_URI: logger-db
+    ports:
+      - "1016:1016"
+
+  processor-ms:
+    image: 209138155/alerthub-processor-ms:v4
+    container_name: processor-ms
+    depends_on:
+      - kafka
+      - loader-ms
+      - metric-ms
+      - logger-ms
+    environment:
+      KAFKA_SERVERS: kafka:9092
+      LOADER_URL: http://loader-ms:1010/api/loader
+      METRIC_URL: http://metric-ms:1011/api/metric
+      LOGGER_URL: http://logger-ms:1016/api/logger
+    ports:
+      - "1013:1013"
+
+  email-ms:
+    image: 209138155/alerthub-email-ms:v4
+    container_name: email-ms
+    depends_on:
+      - kafka
+      - logger-ms
+    environment:
+      KAFKA_SERVERS: kafka:9092
+      LOGGER_URL: http://logger-ms:1016/api/logger
+      SPRING_MAIL_HOST: smtp.gmail.com
+      SPRING_MAIL_PORT: 587
+      SPRING_MAIL_USERNAME: ${SPRING_MAIL_USERNAME:-}
+      SPRING_MAIL_PASSWORD: ${SPRING_MAIL_PASSWORD:-}
+    ports:
+      - "1014:1014"
+
+  sms-ms:
+    image: 209138155/alerthub-sms-ms:v4
+    container_name: sms-ms
+    depends_on:
+      - kafka
+      - logger-ms
+    environment:
+      KAFKA_SERVERS: kafka:9092
+      LOGGER_URL: http://logger-ms:1016/api/logger
+      TWILIO_API_KEY: ${TWILIO_API_KEY:-}
+      TWILIO_API_SECRET: ${TWILIO_API_SECRET:-}
+      TWILIO_ACCOUNT_SID: ${TWILIO_ACCOUNT_SID:-}
+      TWILIO_MESSAGING_SERVICE_SID: ${TWILIO_MESSAGING_SERVICE_SID:-}
+    ports:
+      - "1015:1015"
+
+  evaluation-ms:
+    image: 209138155/alerthub-evaluation-ms:v4
+    container_name: evaluation-ms
+    depends_on:
+      - kafka
+      - loader-ms
+    environment:
+      KAFKA_SERVERS: kafka:9092
+      LOADER_URL: http://loader-ms:1010/api/loader
+      EVALUATION_NOTIFICATION_TO: admin@gmail.com
+    ports:
+      - "1017:1017"
+
+  gateway-ms:
+    image: 209138155/alerthub-gateway-ms:v4
+    container_name: gateway-ms
+    depends_on:
+      - security-ms
+      - user-ms
+      - loader-ms
+      - metric-ms
+      - action-ms
+      - processor-ms
+      - email-ms
+      - sms-ms
+      - logger-ms
+      - evaluation-ms
+    environment:
+      JWT_SECRET: AlertHubSecuritySecretKey19981998
+      SECURITY_URL: http://security-ms:1008
+      USER_URL: http://user-ms:1009
+      LOADER_URL: http://loader-ms:1010
+      METRIC_URL: http://metric-ms:1011
+      ACTION_URL: http://action-ms:1012
+      PROCESSOR_URL: http://processor-ms:1013
+      EMAIL_URL: http://email-ms:1014
+      SMS_URL: http://sms-ms:1015
+      LOGGER_URL: http://logger-ms:1016
+      EVALUATION_URL: http://evaluation-ms:1017
+    ports:
+      - "1007:1007"
