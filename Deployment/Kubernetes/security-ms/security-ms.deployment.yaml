@@ -1,0 +1,31 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: security-ms
+  namespace: alerthub
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: security-ms
+  template:
+    metadata:
+      labels:
+        app: security-ms
+    spec:
+      containers:
+      - name: security-ms
+        image: 209138155/alerthub-security-ms:v5
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 1008
+        env:
+        - name: USER_URL
+          value: http://user-ms:1009
+        - name: JWT_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: alerthub-secrets
+              key: JWT_SECRET
+        - name: JWT_EXPIRATION
+          value: '3600000'

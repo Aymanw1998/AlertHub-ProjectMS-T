@@ -1,6 +1,6 @@
 import { useState, type FormEvent } from 'react'
 import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom'
-import { useAuth } from '../auth/AuthProvider'
+import { useAuth } from '../auth/useAuth'
 
 type RouterState = {
   from?: {
@@ -14,8 +14,8 @@ export function LoginPage() {
   const location = useLocation()
   const state = location.state as RouterState | null
 
-  const [username, setUsername] = useState('')
-  const [password, setPassword] = useState('')
+  const [username, setUsername] = useState('admin')
+  const [password, setPassword] = useState('admin')
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
 
@@ -45,8 +45,13 @@ export function LoginPage() {
   return (
     <div className="auth-container">
       <form className="auth-card" onSubmit={onSubmit}>
-        <h1>AlertHub Login</h1>
-        <p>Sign in through GatewayMS to access the dashboard.</p>
+        <div className="auth-brand">
+          <div className="brand-mark">AH</div>
+          <div>
+            <h1>Alert Hub</h1>
+            <p>Gateway-connected operations console</p>
+          </div>
+        </div>
 
         <label className="form-field">
           Username

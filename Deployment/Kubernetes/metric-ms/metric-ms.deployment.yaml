@@ -1,0 +1,42 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: metric-ms
+  namespace: alerthub
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: metric-ms
+  template:
+    metadata:
+      labels:
+        app: metric-ms
+    spec:
+      initContainers:
+      - name: wait-for-metric-db
+        image: busybox:1.36
+        command:
+        - sh
+        - -c
+        - until nc -z metric-db 3306; do echo waiting for metric-db:3306; sleep 2;
+          done
+      containers:
+      - name: metric-ms
+        image: 209138155/alerthub-metric-ms:v5
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 1011
+        env:
+        - name: METRIC_DB_URL
+          value: jdbc:mysql://metric-db:3306/MetricDB?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+        - name: MYSQL_USERNAME
+          valueFrom:
+            secretKeyRef:
+              name: alerthub-secrets
+              key: MYSQL_USERNAME
+        - name: MYSQL_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: alerthub-secrets
+              key: MYSQL_PASSWORD

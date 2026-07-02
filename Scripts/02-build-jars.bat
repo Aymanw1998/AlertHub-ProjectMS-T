@@ -14,12 +14,12 @@ for %%S in (%SERVICES%) do (
     echo Building JAR for %%S
     echo -------------------------------
 
-    if not exist "%PROJECT_ROOT%\..\src\Backend\%%S" (
+    if not exist "%PROJECT_ROOT%\..\src\backend\%%S" (
         echo Folder %%S not found.
         exit /b 1
     )
 
-    cd /d "%PROJECT_ROOT%\..\src\Backend\%%S"
+    cd /d "%PROJECT_ROOT%\..\src\backend\%%S"
 
     call mvnw.cmd clean package
     if errorlevel 1 (

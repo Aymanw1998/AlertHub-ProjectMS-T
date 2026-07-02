@@ -145,6 +145,16 @@ public class ActionService {
         repo.save(action);
     }
 
+    public Action restore(Long id) throws ActionNotFoundException {
+        Action action = getOneById(id);
+
+        action.setIs_deleted(false);
+        action.setIs_enabled(true);
+        action.setLast_update(new Timestamp(System.currentTimeMillis()));
+
+        return repo.save(action);
+    }
+
     // מתודת עזר לוולידציה (הלוגיקה העסקית)
     private void validateAction(Action info) throws InvalidNameException, InvalidActionTypeException,
             InvalidMessageException, InvalidRecipientException, InvalidRunDayTimeException, InvalidConditionException {

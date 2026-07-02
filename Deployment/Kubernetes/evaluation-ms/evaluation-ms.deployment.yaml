@@ -1,0 +1,35 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: evaluation-ms
+  namespace: alerthub
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: evaluation-ms
+  template:
+    metadata:
+      labels:
+        app: evaluation-ms
+    spec:
+      initContainers:
+      - name: wait-for-kafka
+        image: busybox:1.36
+        command:
+        - sh
+        - -c
+        - until nc -z kafka 9092; do echo waiting for kafka:9092; sleep 2; done
+      containers:
+      - name: evaluation-ms
+        image: 209138155/alerthub-evaluation-ms:v5
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 1017
+        env:
+        - name: KAFKA_SERVERS
+          value: kafka:9092
+        - name: LOADER_URL
+          value: http://loader-ms:1010/api/loader
+        - name: EVALUATION_NOTIFICATION_TO
+          value: admin@gmail.com

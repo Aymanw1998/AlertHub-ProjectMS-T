@@ -65,7 +65,6 @@ class AuthenticationServiceTest {
                 "http://localhost:1009/api/user/internal/security/ayman",
                 UserSecurityResponseDTO.class
         )).thenReturn(user);
-
         SigninResponseDTO response =
                 authenticationService.signin(new SigninRequestDTO("ayman", "123456"));
 
@@ -82,7 +81,7 @@ class AuthenticationServiceTest {
                 "ayman",
                 "ayman@example.com",
                 "+972508241000",
-                "123456",
+                passwordEncoder.encode("123456"),
                 List.of(new RoleResponseDTO(1L, "read"))
         );
 
@@ -90,7 +89,6 @@ class AuthenticationServiceTest {
                 "http://localhost:1009/api/user/internal/security/ayman",
                 UserSecurityResponseDTO.class
         )).thenReturn(user);
-
         ResponseStatusException exception = assertThrows(
                 ResponseStatusException.class,
                 () -> authenticationService.signin(new SigninRequestDTO("ayman", "wrong"))

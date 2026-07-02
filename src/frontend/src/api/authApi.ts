@@ -9,13 +9,14 @@ export type SignInResponse = {
   token: string
   userId: number
   username: string
-  roles: string[]
+  roles?: string[]
 }
 
 export type SignupRequest = {
   username: string
   email: string
   password: string
+  phone?: string
 }
 
 export async function signIn(payload: SignInRequest): Promise<SignInResponse> {

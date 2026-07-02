@@ -2,9 +2,16 @@ import { Navigate, Route, Routes } from 'react-router-dom'
 import { DashboardLayout } from './components/layout/DashboardLayout'
 import { ProtectedRoute } from './auth/ProtectedRoute'
 import { DashboardPage } from './pages/DashboardPage'
+import { ActionsPage } from './pages/ActionsPage'
+import { EvaluationPage } from './pages/EvaluationPage'
+import { LoaderPage } from './pages/LoaderPage'
 import { LoginPage } from './pages/LoginPage'
-import { PlaceholderPage } from './pages/PlaceholderPage'
+import { LogsPage } from './pages/LogsPage'
+import { MetricsPage } from './pages/MetricsPage'
+import { NotificationsPage } from './pages/NotificationsPage'
+import { ProcessorPage } from './pages/ProcessorPage'
 import { SignupPage } from './pages/SignupPage'
+import { UsersPage } from './pages/UsersPage'
 
 function App() {
   return (
@@ -22,15 +29,14 @@ function App() {
       >
         <Route index element={<Navigate to="/dashboard" replace />} />
         <Route path="dashboard" element={<DashboardPage />} />
-        <Route path="loader" element={<PlaceholderPage title="Loader" />} />
-        <Route path="metrics" element={<PlaceholderPage title="Metrics" />} />
-        <Route path="actions" element={<PlaceholderPage title="Actions" />} />
-        <Route path="logs" element={<PlaceholderPage title="Logs" />} />
-        <Route
-          path="evaluation"
-          element={<PlaceholderPage title="Evaluation" />}
-        />
-        <Route path="users" element={<PlaceholderPage title="Users" />} />
+        <Route path="loader" element={<LoaderPage />} />
+        <Route path="metrics" element={<MetricsPage />} />
+        <Route path="actions" element={<ActionsPage />} />
+        <Route path="processor" element={<ProcessorPage />} />
+        <Route path="notifications" element={<NotificationsPage />} />
+        <Route path="evaluation" element={<EvaluationPage />} />
+        <Route path="users" element={<UsersPage />} />
+        <Route path="logs" element={<LogsPage />} />
       </Route>
 
       <Route path="*" element={<Navigate to="/dashboard" replace />} />

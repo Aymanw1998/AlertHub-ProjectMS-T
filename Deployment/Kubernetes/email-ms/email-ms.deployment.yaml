@@ -1,0 +1,47 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: email-ms
+  namespace: alerthub
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: email-ms
+  template:
+    metadata:
+      labels:
+        app: email-ms
+    spec:
+      initContainers:
+      - name: wait-for-kafka
+        image: busybox:1.36
+        command:
+        - sh
+        - -c
+        - until nc -z kafka 9092; do echo waiting for kafka:9092; sleep 2; done
+      containers:
+      - name: email-ms
+        image: 209138155/alerthub-email-ms:v5
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 1014
+        env:
+        - name: KAFKA_SERVERS
+          value: kafka:9092
+        - name: LOGGER_URL
+          value: http://logger-ms:1016/api/logger
+        - name: SPRING_MAIL_HOST
+          value: smtp.gmail.com
+        - name: SPRING_MAIL_PORT
+          value: '587'
+        - name: SPRING_MAIL_USERNAME
+          valueFrom:
+            secretKeyRef:
+              name: alerthub-secrets
+              key: SPRING_MAIL_USERNAME
+        - name: SPRING_MAIL_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: alerthub-secrets
+              key: SPRING_MAIL_PASSWORD

@@ -6,10 +6,13 @@ import com.mst.dto.LabelAggregateResponse;
 import com.mst.dto.TaskAmountResponse;
 import com.mst.model.Label;
 import com.mst.model.Loader;
+import com.mst.model.Notification;
 import feign.FeignException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
+import tools.jackson.databind.ObjectMapper;
 
 import java.time.LocalDateTime;
 import java.util.Comparator;
@@ -23,7 +26,15 @@ public class EvaluationService {
     @Autowired
     private LoaderClient loaderClient;
 
-    public DeveloperLabelCountResponse getDeveloperWithMostLabel(String labelName, Integer sinceDays) {
+    @Autowired
+    private KafkaTemplate<String, String> kafkaTemplate;
+
+    @Autowired
+    private ObjectMapper objectMapper;
+
+
+    public DeveloperLabelCountResponse getDeveloperWithMostLabel(String labelName, Integer sinceDays, String to) {
+
         Label label = Label.fromString(labelName);
         LocalDateTime fromDate = getFromDate(sinceDays);
         List<Loader> data = getPlatformInformation();
@@ -37,7 +48,7 @@ public class EvaluationService {
                         Collectors.counting()
                 ));
 
-        return countsByDeveloper.entrySet().stream()
+        DeveloperLabelCountResponse response = countsByDeveloper.entrySet().stream()
                 .max(Comparator.comparingLong(Map.Entry::getValue))
                 .map(entry -> new DeveloperLabelCountResponse(
                         entry.getKey(),
@@ -51,9 +62,13 @@ public class EvaluationService {
                         sinceDays,
                         0L
                 ));
+
+        sendEvaluationResultToEmail(response, to);
+
+        return response;
     }
 
-    public LabelAggregateResponse getLabelAggregate(String developerId, Integer sinceDays) {
+    public LabelAggregateResponse getLabelAggregate(String developerId, Integer sinceDays, String to) {
         validateDeveloperId(developerId);
 
         LocalDateTime fromDate = getFromDate(sinceDays);
@@ -68,14 +83,17 @@ public class EvaluationService {
                         Collectors.counting()
                 ));
 
-        return new LabelAggregateResponse(
+        LabelAggregateResponse response = new LabelAggregateResponse(
                 developerId,
                 sinceDays,
                 labelCounts
         );
-    }
 
-    public TaskAmountResponse getTaskAmount(String developerId, Integer sinceDays) {
+        sendEvaluationResultToEmail(response, to);
+
+        return response;
+    }
+    public TaskAmountResponse getTaskAmount(String developerId, Integer sinceDays, String to) {
         validateDeveloperId(developerId);
 
         LocalDateTime fromDate = getFromDate(sinceDays);
@@ -86,13 +104,16 @@ public class EvaluationService {
                 .filter(item -> developerId.equals(item.getDeveloper_id()))
                 .count();
 
-        return new TaskAmountResponse(
+        TaskAmountResponse response = new TaskAmountResponse(
                 developerId,
                 sinceDays,
                 taskAmount
         );
-    }
 
+        sendEvaluationResultToEmail(response, to);
+
+        return response;
+    }
     private List<Loader> getPlatformInformation() {
         try {
             ResponseEntity<List<Loader>> response = loaderClient.getAllData();
@@ -130,5 +151,21 @@ public class EvaluationService {
 
     private boolean hasText(String value) {
         return value != null && !value.isBlank();
+    }
+
+    private void sendEvaluationResultToEmail(Object result, String to) {
+        try {
+            Notification notification = new Notification();
+            notification.setName("EvaluationMS");
+            notification.setTo(to);
+            notification.setMessage(objectMapper.writeValueAsString(result));
+
+            String json = objectMapper.writeValueAsString(notification);
+
+            kafkaTemplate.send("emailTopic", json);
+
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to send evaluation result to emailTopic");
+        }
     }
 }

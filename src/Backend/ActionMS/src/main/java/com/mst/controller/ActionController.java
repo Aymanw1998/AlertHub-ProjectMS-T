@@ -75,4 +75,13 @@ public class ActionController {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
         }
     }
+
+    @PatchMapping("/restore/{id}")
+    public ResponseEntity<?> restore(@PathVariable Long id) {
+        try {
+            return ResponseEntity.ok(service.restore(id));
+        } catch (ActionNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+        }
+    }
 }

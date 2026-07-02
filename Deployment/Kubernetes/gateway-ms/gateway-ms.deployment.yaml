@@ -1,0 +1,47 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: gateway-ms
+  namespace: alerthub
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: gateway-ms
+  template:
+    metadata:
+      labels:
+        app: gateway-ms
+    spec:
+      containers:
+      - name: gateway-ms
+        image: 209138155/alerthub-gateway-ms:v5
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 1007
+        env:
+        - name: JWT_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: alerthub-secrets
+              key: JWT_SECRET
+        - name: SECURITY_URL
+          value: http://security-ms:1008
+        - name: USER_URL
+          value: http://user-ms:1009
+        - name: LOADER_URL
+          value: http://loader-ms:1010
+        - name: METRIC_URL
+          value: http://metric-ms:1011
+        - name: ACTION_URL
+          value: http://action-ms:1012
+        - name: PROCESSOR_URL
+          value: http://processor-ms:1013
+        - name: EMAIL_URL
+          value: http://email-ms:1014
+        - name: SMS_URL
+          value: http://sms-ms:1015
+        - name: LOGGER_URL
+          value: http://logger-ms:1016
+        - name: EVALUATION_URL
+          value: http://evaluation-ms:1017

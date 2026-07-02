@@ -120,6 +120,23 @@ class ActionServiceTest {
         verify(actionRepo).save(existing);
     }
 
+    @Test
+    void restore_whenActionExists_marksAsNotDeletedAndEnabled() throws Exception {
+        Action existing = validAction();
+        existing.setId(1L);
+        existing.setIs_deleted(true);
+        existing.setIs_enabled(false);
+        when(actionRepo.findById(1L)).thenReturn(Optional.of(existing));
+        when(actionRepo.save(existing)).thenReturn(existing);
+
+        Action restored = actionService.restore(1L);
+
+        assertFalse(restored.getIs_deleted());
+        assertTrue(restored.getIs_enabled());
+        assertNotNull(restored.getLast_update());
+        verify(actionRepo).save(existing);
+    }
+
     private Action validAction() {
         Action action = new Action();
         action.setOwner_id("1");

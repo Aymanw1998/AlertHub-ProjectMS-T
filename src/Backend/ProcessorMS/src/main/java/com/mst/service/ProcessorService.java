@@ -1,18 +1,14 @@
 package com.mst.service;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.mst.model.*;
+import tools.jackson.core.type.TypeReference;
+import tools.jackson.databind.ObjectMapper;
 import com.mst.client.LoaderClient;
 import com.mst.client.MetricClient;
 import com.mst.dto.LoggerRequestDTO;
 import com.mst.exceptions.ExternalServiceException;
 import com.mst.exceptions.InvalidConditionException;
 import com.mst.exceptions.MetricNotFoundException;
-import com.mst.model.Action;
-import com.mst.model.ActionType;
-import com.mst.model.Loader;
-import com.mst.model.Metric;
 import feign.FeignException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -59,17 +55,29 @@ public class ProcessorService {
         try {
             Action action = objectMapper.readValue(actionJson, Action.class);
             processAction(action);
-        } catch (JsonProcessingException e) {
-            System.out.println("Invalid Action JSON: " + e.getMessage());
+
         } catch (FeignException e) {
-            System.out.println("External service error. Status: " +e.status() + " Message: " + e.getMessage());
+            String msg = "External service error. Status: "
+                    + e.status()
+                    + ", Message: "
+                    + e.getMessage();
+
+            System.out.println(msg);
+            sendLog("ERROR", msg);
+
         } catch (ExternalServiceException | InvalidConditionException | MetricNotFoundException e) {
-            System.out.println("Processor logic error: " + e.getMessage());
+            String msg = "Processor logic error: " + e.getMessage();
+
+            System.out.println(msg);
+            sendLog("WARN", msg);
+
         } catch (Exception e) {
-            System.out.println("Unexpected Processor error" + e);
+            String msg = "Unexpected Processor error: " + e.getMessage();
+
+            System.out.println(msg);
+            sendLog("ERROR", msg);
         }
     }
-
     private void sendLog(String logLevel, String message) {
         try {
             LoggerRequestDTO dto = new LoggerRequestDTO();
@@ -83,7 +91,7 @@ public class ProcessorService {
         }
     }
 
-    public void processAction(Action action) throws JsonProcessingException {
+    public void processAction(Action action) {
         validateAction(action);
 
         List<Loader> loaders = getLoaders();
@@ -92,7 +100,12 @@ public class ProcessorService {
         boolean isConditionPassed = evaluateCondition(action.getCondition(), metrics, loaders);
 
         if (!isConditionPassed) {
-            System.out.println("Condition is false. Action id " + action.getId() + " will not be sent. ");
+            String msg = "Condition is false. Action id " + action.getId()
+                    + " will not be sent to notification topic.";
+
+            System.out.println(msg);
+            sendLog("INFO", msg);
+
             return;
         }
 
@@ -163,6 +176,13 @@ public class ProcessorService {
                 boolean metricResult = checkMetric(metric, loaders);
 
                 if (!metricResult) {
+                    sendLog(
+                            "INFO",
+                            "Metric failed. metricId="
+                                    + metricId
+                                    + ", action condition="
+                                    + condition
+                    );
                     groupResult = false;
                     break;
                 }
@@ -198,17 +218,53 @@ public class ProcessorService {
         return count >= metric.getThreshold();
     }
 
-    private void sendNotification(Action action) throws JsonProcessingException {
-        String topic = getTopicByActionType(action.getAction_type());
+    private void sendNotification(Action action) {
+        try {
+            String topic = getTopicByActionType(action.getAction_type());
 
-        String payload = objectMapper.writeValueAsString(action);
+            Notification notification = new Notification();
+            notification.setOwner_id(Long.parseLong(action.getOwner_id()));
+            notification.setName(action.getName());
+            notification.setTo(action.getTo());
+            notification.setMessage(action.getMessage());
 
-        kafkaTemplate.send(topic, payload);
+            String payload = objectMapper.writeValueAsString(notification);
 
-        System.out.println("Notification sent to topic " + topic + " with payload " + payload);
-        sendLog("INFO", "Processor inserted message into Kafka topic " + action.getAction_type() + " for action id " + action.getId());
+            kafkaTemplate.send(topic, payload).whenComplete((result, ex) -> {
+                if (ex != null) {
+                    String errorMsg = "Failed to insert notification message into Kafka topic "
+                            + topic
+                            + " for action id "
+                            + action.getId()
+                            + ". Error: "
+                            + ex.getMessage();
+
+                    System.out.println(errorMsg);
+                    sendLog("ERROR", errorMsg);
+
+                } else {
+                    String successMsg = "Processor inserted message into Kafka topic "
+                            + topic
+                            + " for action id "
+                            + action.getId();
+
+                    System.out.println(successMsg);
+                    sendLog("INFO", successMsg);
+                }
+            });
+
+        } catch (Exception e) {
+            String msg = "Failed to build/send notification for action id "
+                    + action.getId()
+                    + ". Error: "
+                    + e.getMessage();
+
+            System.out.println(msg);
+            sendLog("ERROR", msg);
+
+            throw new RuntimeException(msg, e);
+        }
     }
-
     private String getTopicByActionType(ActionType actionType) {
         return switch (actionType) {
             case EMAIL -> "emailTopic";

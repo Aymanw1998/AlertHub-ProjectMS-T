@@ -36,7 +36,9 @@ public class GatewayJwtService {
     public String getUsername(String token) {
         return getClaims(token).getSubject();
     }
-
+    public String getEmail(String token) {
+        return getClaims(token).get("email").toString();
+    }
     public Long getUserId(String token) {
         Number userId = getClaims(token).get("userId", Number.class);
         return userId == null ? null : userId.longValue();
@@ -59,4 +61,5 @@ public class GatewayJwtService {
                 ? token.substring(7)
                 : token;
     }
+
 }

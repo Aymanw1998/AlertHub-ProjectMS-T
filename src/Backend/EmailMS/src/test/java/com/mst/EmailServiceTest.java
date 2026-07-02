@@ -1,6 +1,6 @@
 package com.mst;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.ObjectMapper;
 import com.mst.dto.LoggerRequestDTO;
 import com.mst.model.Notification;
 import com.mst.service.EmailService;

@@ -17,6 +17,7 @@ public class RequiredRoleService {
 
         if (path.startsWith("/api/action/")) {
             if (path.matches("/api/action/process/\\d+")) return "triggerProcess";
+            if (path.matches("/api/action/restore/\\d+")) return "updateAction";
             if (method == HttpMethod.POST) return "createAction";
             if (method == HttpMethod.PUT) return "updateAction";
             if (method == HttpMethod.DELETE) return "deleteAction";

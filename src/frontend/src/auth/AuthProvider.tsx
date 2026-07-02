@@ -1,33 +1,18 @@
 import {
-  createContext,
   useCallback,
-  useContext,
   useMemo,
   useState,
   type ReactNode,
 } from 'react'
 import { signIn, type SignInResponse, type SignupRequest } from '../api/authApi'
 import { signUp } from '../api/authApi'
+import {
+  AuthContext,
+  type AuthContextValue,
+  type AuthState,
+} from './authContext'
 
 const AUTH_STORAGE_KEY = 'alerthub-auth'
-
-type AuthState = {
-  token: string
-  userId: number
-  username: string
-  roles: string[]
-}
-
-type AuthContextValue = {
-  auth: AuthState | null
-  isAuthenticated: boolean
-  signInWithPassword: (username: string, password: string) => Promise<void>
-  signupNewUser: (payload: SignupRequest) => Promise<void>
-  logout: () => void
-  hasRole: (role: string) => boolean
-}
-
-const AuthContext = createContext<AuthContextValue | undefined>(undefined)
 
 function getInitialAuthState(): AuthState | null {
   const rawValue = localStorage.getItem(AUTH_STORAGE_KEY)
@@ -48,7 +33,7 @@ function toAuthState(response: SignInResponse): AuthState {
     token: response.token,
     userId: response.userId,
     username: response.username,
-    roles: response.roles,
+    roles: Array.isArray(response.roles) ? response.roles : [],
   }
 }
 
@@ -85,7 +70,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (!auth) {
         return false
       }
-      return auth.roles.includes(role)
+      return auth.username === 'admin' || auth.roles.includes(role)
     },
     [auth],
   )
@@ -103,13 +88,4 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
-}
-
-export function useAuth() {
-  const context = useContext(AuthContext)
-  if (!context) {
-    throw new Error('useAuth must be used inside AuthProvider')
-  }
-
-  return context
 }

@@ -24,7 +24,7 @@ class JwtServiceTest {
 
     @Test
     void generateToken_containsUsernameAndRoles() {
-        String token = jwtService.generateToken("ayman", 1L, List.of("read"));
+        String token = jwtService.generateToken("ayman", 1L, List.of("read"), "aymanw199816@hotmail.com");
 
         assertTrue(jwtService.isValid(token));
         assertEquals("ayman", jwtService.getUsername(token));
