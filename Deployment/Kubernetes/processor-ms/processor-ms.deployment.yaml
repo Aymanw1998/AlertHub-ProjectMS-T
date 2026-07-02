@@ -1,0 +1,37 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: processor-ms
+  namespace: alerthub
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: processor-ms
+  template:
+    metadata:
+      labels:
+        app: processor-ms
+    spec:
+      initContainers:
+      - name: wait-for-kafka
+        image: busybox:1.36
+        command:
+        - sh
+        - -c
+        - until nc -z kafka 9092; do echo waiting for kafka:9092; sleep 2; done
+      containers:
+      - name: processor-ms
+        image: 209138155/alerthub-processor-ms:v5
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 1013
+        env:
+        - name: KAFKA_SERVERS
+          value: kafka:9092
+        - name: LOADER_URL
+          value: http://loader-ms:1010/api/loader
+        - name: METRIC_URL
+          value: http://metric-ms:1011/api/metric
+        - name: LOGGER_URL
+          value: http://logger-ms:1016/api/logger

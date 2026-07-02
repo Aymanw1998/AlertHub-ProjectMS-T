@@ -1,0 +1,41 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: user-ms
+  namespace: alerthub
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: user-ms
+  template:
+    metadata:
+      labels:
+        app: user-ms
+    spec:
+      initContainers:
+      - name: wait-for-user-db
+        image: busybox:1.36
+        command:
+        - sh
+        - -c
+        - until nc -z user-db 3306; do echo waiting for user-db:3306; sleep 2; done
+      containers:
+      - name: user-ms
+        image: 209138155/alerthub-user-ms:v5
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 1009
+        env:
+        - name: USER_DB_URL
+          value: jdbc:mysql://user-db:3306/UserDB?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+        - name: MYSQL_USERNAME
+          valueFrom:
+            secretKeyRef:
+              name: alerthub-secrets
+              key: MYSQL_USERNAME
+        - name: MYSQL_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: alerthub-secrets
+              key: MYSQL_PASSWORD

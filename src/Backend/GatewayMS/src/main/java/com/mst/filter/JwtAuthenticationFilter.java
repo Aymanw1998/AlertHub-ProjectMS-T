@@ -58,6 +58,7 @@ public class JwtAuthenticationFilter implements GlobalFilter, Ordered {
                     headers.set("X-User-Id", String.valueOf(jwtService.getUserId(token)));
                     headers.set("X-Username", jwtService.getUsername(token));
                     headers.set("X-User-Roles", String.join(",", roles));
+                    headers.set("X-User-Email", String.valueOf(jwtService.getEmail(token)));
                 }))
                 .build();
 

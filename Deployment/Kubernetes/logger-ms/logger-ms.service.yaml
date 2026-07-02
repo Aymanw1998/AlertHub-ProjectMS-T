@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: logger-ms
+  namespace: alerthub
+spec:
+  type: ClusterIP
+  selector:
+    app: logger-ms
+  ports:
+  - name: http
+    port: 1016
+    targetPort: 1016

@@ -1,12 +1,13 @@
 import { useState, type FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { useAuth } from '../auth/AuthProvider'
+import { useAuth } from '../auth/useAuth'
 
 export function SignupPage() {
   const { signupNewUser } = useAuth()
   const navigate = useNavigate()
   const [username, setUsername] = useState('')
   const [email, setEmail] = useState('')
+  const [phone, setPhone] = useState('')
   const [password, setPassword] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
@@ -19,7 +20,7 @@ export function SignupPage() {
     setIsSubmitting(true)
 
     try {
-      await signupNewUser({ username, email, password })
+      await signupNewUser({ username, email, phone, password })
       setSuccessMessage('Signup successful. You can now sign in.')
       setTimeout(() => navigate('/login'), 900)
     } catch (error) {
@@ -34,8 +35,13 @@ export function SignupPage() {
   return (
     <div className="auth-container">
       <form className="auth-card" onSubmit={onSubmit}>
-        <h1>Create account</h1>
-        <p>This sends POST /api/auth/signup through GatewayMS.</p>
+        <div className="auth-brand">
+          <div className="brand-mark">AH</div>
+          <div>
+            <h1>Create account</h1>
+            <p>Register through GatewayMS and SecurityMS.</p>
+          </div>
+        </div>
 
         <label className="form-field">
           Username
@@ -55,6 +61,16 @@ export function SignupPage() {
             required
             type="email"
             value={email}
+          />
+        </label>
+
+        <label className="form-field">
+          Phone
+          <input
+            autoComplete="tel"
+            onChange={(event) => setPhone(event.target.value)}
+            required
+            value={phone}
           />
         </label>
 

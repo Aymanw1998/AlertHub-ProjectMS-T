@@ -20,8 +20,18 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.when;
 
+import tools.jackson.databind.ObjectMapper;
+
+import org.springframework.kafka.core.KafkaTemplate;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
+
 @SpringBootTest(classes = EvaluationService.class)
 class EvaluationServiceTest {
+    @MockitoBean
+    private ObjectMapper objectMapper;
+
+    @MockitoBean
+    private KafkaTemplate<String, String> kafkaTemplate;
 
     @MockitoBean
     private LoaderClient loaderClient;
@@ -39,7 +49,7 @@ class EvaluationServiceTest {
         )));
 
         DeveloperLabelCountResponse response =
-                evaluationService.getDeveloperWithMostLabel("bug", 7);
+                evaluationService.getDeveloperWithMostLabel("bug", 7, "test@test.com");
 
         assertEquals("dev1", response.getDeveloperId());
         assertEquals(Label.BUG, response.getLabel());
@@ -56,7 +66,7 @@ class EvaluationServiceTest {
         )));
 
         LabelAggregateResponse response =
-                evaluationService.getLabelAggregate("dev1", 7);
+                evaluationService.getLabelAggregate("dev1", 7, "test@test.com");
 
         assertEquals(2L, response.getLabelCounts().get(Label.BUG));
         assertEquals(1L, response.getLabelCounts().get(Label.DOCUMENTATION));
@@ -72,7 +82,7 @@ class EvaluationServiceTest {
         )));
 
         TaskAmountResponse response =
-                evaluationService.getTaskAmount("dev1", 7);
+                evaluationService.getTaskAmount("dev1", 7, "test");
 
         assertEquals("dev1", response.getDeveloperId());
         assertEquals(2L, response.getTaskAmount());
@@ -80,12 +90,12 @@ class EvaluationServiceTest {
 
     @Test
     void getTaskAmount_whenSinceInvalid_throwsIllegalArgumentException() {
-        assertThrows(IllegalArgumentException.class, () -> evaluationService.getTaskAmount("dev1", 0));
+        assertThrows(IllegalArgumentException.class, () -> evaluationService.getTaskAmount("dev1", 0, "test@test.com"));
     }
 
     @Test
     void getLabelAggregate_whenDeveloperIdBlank_throwsIllegalArgumentException() {
-        assertThrows(IllegalArgumentException.class, () -> evaluationService.getLabelAggregate(" ", 7));
+        assertThrows(IllegalArgumentException.class, () -> evaluationService.getLabelAggregate(" ", 7, "test@test.com"));
     }
 
     private Loader loader(String developerId, Label label, int daysAgo) {

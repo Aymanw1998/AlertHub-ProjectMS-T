@@ -1,0 +1,41 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: action-db
+  namespace: alerthub
+spec:
+  serviceName: action-db
+  replicas: 1
+  selector:
+    matchLabels:
+      app: action-db
+  template:
+    metadata:
+      labels:
+        app: action-db
+    spec:
+      containers:
+      - name: action-db
+        image: mysql:8.0
+        ports:
+        - containerPort: 3306
+        env:
+        - name: MYSQL_ROOT_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: alerthub-secrets
+              key: MYSQL_ROOT_PASSWORD
+        - name: MYSQL_DATABASE
+          value: ActionDB
+        volumeMounts:
+        - name: action-db-storage
+          mountPath: /var/lib/mysql
+  volumeClaimTemplates:
+  - metadata:
+      name: action-db-storage
+    spec:
+      accessModes:
+      - ReadWriteOnce
+      resources:
+        requests:
+          storage: 1Gi

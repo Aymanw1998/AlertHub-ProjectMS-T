@@ -1,0 +1,41 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: metric-db
+  namespace: alerthub
+spec:
+  serviceName: metric-db
+  replicas: 1
+  selector:
+    matchLabels:
+      app: metric-db
+  template:
+    metadata:
+      labels:
+        app: metric-db
+    spec:
+      containers:
+      - name: metric-db
+        image: mysql:8.0
+        ports:
+        - containerPort: 3306
+        env:
+        - name: MYSQL_ROOT_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: alerthub-secrets
+              key: MYSQL_ROOT_PASSWORD
+        - name: MYSQL_DATABASE
+          value: MetricDB
+        volumeMounts:
+        - name: metric-db-storage
+          mountPath: /var/lib/mysql
+  volumeClaimTemplates:
+  - metadata:
+      name: metric-db-storage
+    spec:
+      accessModes:
+      - ReadWriteOnce
+      resources:
+        requests:
+          storage: 1Gi

@@ -91,7 +91,7 @@ public class AuthenticationService {
                     ? List.of()
                     : user.getRoles().stream().map(RoleResponseDTO::getRole).toList();
 
-            String token = jwtService.generateToken(user.getUsername(), user.getId(), roles);
+            String token = jwtService.generateToken(user.getUsername(), user.getId(), roles, user.getEmail());
             return new SigninResponseDTO(token, user.getId(), user.getUsername(), roles);
         } catch (HttpClientErrorException e) {
             throw invalidCredentials();

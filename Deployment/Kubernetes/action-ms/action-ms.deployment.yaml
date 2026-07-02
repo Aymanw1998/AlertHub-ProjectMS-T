@@ -1,0 +1,50 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: action-ms
+  namespace: alerthub
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: action-ms
+  template:
+    metadata:
+      labels:
+        app: action-ms
+    spec:
+      initContainers:
+      - name: wait-for-action-db
+        image: busybox:1.36
+        command:
+        - sh
+        - -c
+        - until nc -z action-db 3306; do echo waiting for action-db:3306; sleep 2;
+          done
+      - name: wait-for-kafka
+        image: busybox:1.36
+        command:
+        - sh
+        - -c
+        - until nc -z kafka 9092; do echo waiting for kafka:9092; sleep 2; done
+      containers:
+      - name: action-ms
+        image: 209138155/alerthub-action-ms:v5
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 1012
+        env:
+        - name: KAFKA_SERVERS
+          value: kafka:9092
+        - name: ACTION_DB_URL
+          value: jdbc:mysql://action-db:3306/ActionDB?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+        - name: MYSQL_USERNAME
+          valueFrom:
+            secretKeyRef:
+              name: alerthub-secrets
+              key: MYSQL_USERNAME
+        - name: MYSQL_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: alerthub-secrets
+              key: MYSQL_PASSWORD

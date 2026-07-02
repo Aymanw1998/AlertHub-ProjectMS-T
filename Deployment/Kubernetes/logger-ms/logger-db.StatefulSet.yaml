@@ -1,0 +1,33 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: logger-db
+  namespace: alerthub
+spec:
+  serviceName: logger-db
+  replicas: 1
+  selector:
+    matchLabels:
+      app: logger-db
+  template:
+    metadata:
+      labels:
+        app: logger-db
+    spec:
+      containers:
+      - name: logger-db
+        image: mongo:8.3.4
+        ports:
+        - containerPort: 27017
+        volumeMounts:
+        - name: logger-db-storage
+          mountPath: /data/db
+  volumeClaimTemplates:
+  - metadata:
+      name: logger-db-storage
+    spec:
+      accessModes:
+      - ReadWriteOnce
+      resources:
+        requests:
+          storage: 1Gi

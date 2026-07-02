@@ -1,32 +1,38 @@
-# React + TypeScript + Vite
+# Alert Hub Frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+React + TypeScript + Vite UI for the Alert Hub microservices project.
 
-Currently, two official plugins are available:
+## Run locally
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+Start the backend Docker Compose first, then run:
 
-## React Compiler
-
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the Oxlint configuration
-
-If you are developing a production application, we recommend enabling type-aware lint rules by installing `oxlint-tsgolint` and editing `.oxlintrc.json`:
-
-```json
-{
-  "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "plugins": ["react", "typescript", "oxc"],
-  "options": {
-    "typeAware": true
-  },
-  "rules": {
-    "react/rules-of-hooks": "error",
-    "react/only-export-components": ["warn", { "allowConstantExport": true }]
-  }
-}
+```powershell
+npm install
+npm run dev
 ```
 
-See the [Oxlint rules documentation](https://oxc.rs/docs/guide/usage/linter/rules) for the full list of rules and categories.
+In development the UI calls `/api/*`; Vite forwards those calls to GatewayMS at `http://127.0.0.1:1007`.
+
+Default demo login:
+
+```text
+admin / admin
+```
+
+## API integration
+
+The UI uses the Gateway routes exposed by the backend:
+
+- `POST /api/auth/signin`
+- `POST /api/auth/signup`
+- `GET /api/loader/get-all`
+- `GET /api/loader/scan`
+- `GET|POST|PUT|DELETE /api/metric/*`
+- `GET|POST|PUT|DELETE /api/action/*`
+- `GET /api/processor/get-all-data-loader`
+- `GET /api/evaluation/*`
+- `GET /api/logger/get-all`
+- `GET|POST|PATCH|DELETE /api/user/*`
+- `GET /api/role/get-all`
+
+For production hosting, set `VITE_API_BASE_URL` if the frontend is not served behind the same Gateway origin. If it is served behind the same origin, the default relative `/api` paths are used.

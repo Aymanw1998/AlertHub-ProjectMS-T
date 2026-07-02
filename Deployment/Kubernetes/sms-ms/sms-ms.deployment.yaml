@@ -1,0 +1,53 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sms-ms
+  namespace: alerthub
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: sms-ms
+  template:
+    metadata:
+      labels:
+        app: sms-ms
+    spec:
+      initContainers:
+      - name: wait-for-kafka
+        image: busybox:1.36
+        command:
+        - sh
+        - -c
+        - until nc -z kafka 9092; do echo waiting for kafka:9092; sleep 2; done
+      containers:
+      - name: sms-ms
+        image: 209138155/alerthub-sms-ms:v5
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 1015
+        env:
+        - name: KAFKA_SERVERS
+          value: kafka:9092
+        - name: LOGGER_URL
+          value: http://logger-ms:1016/api/logger
+        - name: TWILIO_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: alerthub-secrets
+              key: TWILIO_API_KEY
+        - name: TWILIO_API_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: alerthub-secrets
+              key: TWILIO_API_SECRET
+        - name: TWILIO_ACCOUNT_SID
+          valueFrom:
+            secretKeyRef:
+              name: alerthub-secrets
+              key: TWILIO_ACCOUNT_SID
+        - name: TWILIO_MESSAGING_SERVICE_SID
+          valueFrom:
+            secretKeyRef:
+              name: alerthub-secrets
+              key: TWILIO_MESSAGING_SERVICE_SID

@@ -19,11 +19,13 @@ public class EvaluationController {
     @GetMapping("/developer/most-label")
     public ResponseEntity<?> getDeveloperWithMostLabel(
             @RequestParam String label,
-            @RequestParam Integer since
+            @RequestParam Integer since,
+            @RequestHeader("X-User-Email") String to
+
     ) {
         try {
             DeveloperLabelCountResponse response =
-                    service.getDeveloperWithMostLabel(label, since);
+                    service.getDeveloperWithMostLabel(label, since, to);
 
             return ResponseEntity.ok(response);
 
@@ -38,11 +40,12 @@ public class EvaluationController {
     @GetMapping("/developer/{developerId}/label-aggregate")
     public ResponseEntity<?> getLabelAggregate(
             @PathVariable String developerId,
-            @RequestParam Integer since
+            @RequestParam Integer since,
+            @RequestHeader("X-User-Email") String to
     ) {
         try {
             LabelAggregateResponse response =
-                    service.getLabelAggregate(developerId, since);
+                    service.getLabelAggregate(developerId, since, to);
 
             return ResponseEntity.ok(response);
 
@@ -57,11 +60,12 @@ public class EvaluationController {
     @GetMapping("/developer/{developerId}/task-amount")
     public ResponseEntity<?> getTaskAmount(
             @PathVariable String developerId,
-            @RequestParam Integer since
+            @RequestParam Integer since,
+            @RequestHeader("X-User-Email") String to
     ) {
         try {
             TaskAmountResponse response =
-                    service.getTaskAmount(developerId, since);
+                    service.getTaskAmount(developerId, since, to);
 
             return ResponseEntity.ok(response);
 

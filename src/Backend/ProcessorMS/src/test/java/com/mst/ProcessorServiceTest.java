@@ -1,7 +1,7 @@
 package com.mst;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.core.type.TypeReference;
+import tools.jackson.databind.ObjectMapper;
 import com.mst.client.LoaderClient;
 import com.mst.client.MetricClient;
 import com.mst.dto.LoggerRequestDTO;
@@ -29,6 +29,13 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import com.mst.model.Notification;
+import org.springframework.kafka.support.SendResult;
+
+import java.util.concurrent.CompletableFuture;
+
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.mock;
 
 @SpringBootTest(
         classes = ProcessorService.class,
@@ -67,18 +74,26 @@ class ProcessorServiceTest {
         when(metricClient.getAllData()).thenReturn(ResponseEntity.ok(List.of(metric)));
         when(objectMapper.readValue(eq("[[1]]"), any(TypeReference.class)))
                 .thenReturn(List.of(List.of(1L)));
-        when(objectMapper.writeValueAsString(action)).thenReturn("{\"message\":\"Alert\"}");
+        when(objectMapper.writeValueAsString(any(Notification.class)))
+                .thenReturn("{\"to\":\"+972508241000\",\"message\":\"Alert\"}");
 
+        when(kafkaTemplate.send(eq("smsTopic"), anyString()))
+                .thenReturn(CompletableFuture.completedFuture(mock(SendResult.class)));
         processorService.processAction(action);
 
-        verify(kafkaTemplate).send("smsTopic", "{\"message\":\"Alert\"}");
+        verify(kafkaTemplate).send(
+                eq("smsTopic"),
+                eq("{\"to\":\"+972508241000\",\"message\":\"Alert\"}")
+        );
         verify(restTemplate).postForObject(
                 eq("http://localhost:1016/api/logger/create"),
                 org.mockito.ArgumentMatchers.argThat(body ->
                         body instanceof LoggerRequestDTO dto
                                 && "ProcessorMS".equals(dto.getServiceName())
                                 && "INFO".equals(dto.getLogLevel())
-                                && dto.getMessage().contains("Kafka topic SMS")
+                                && dto.getMessage().contains("Kafka topic smsTopic")
+                                && dto.getMessage().contains("smsTopic")
+                                && dto.getMessage().contains("10")
                 ),
                 eq(String.class)
         );
@@ -113,6 +128,8 @@ class ProcessorServiceTest {
     private Action action(ActionType type) {
         Action action = new Action();
         action.setId(10L);
+        action.setOwner_id("1001");
+        action.setName("Test Action");
         action.setAction_type(type);
         action.setCondition("[[1]]");
         action.setTo("+972508241000");
